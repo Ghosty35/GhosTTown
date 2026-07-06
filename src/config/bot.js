@@ -152,17 +152,6 @@ export const botConfig = {
       url: null,
     },
   },
-
-
-// At the top
-const storyFeature = require('./features/story');
-
-// After client is ready
-client.once(Events.ClientReady, () => {
-  console.log('Bot is online!');
-  storyFeature(client);   // 1483155456649199677 ← Add this line
-});
-
   
   // =========================
   // ECONOMY SETTINGS
