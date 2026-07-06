@@ -1,0 +1,78 @@
+const { Events, PermissionsBitField } = require('discord.js');
+const fs = require('fs');
+const path = require('path');
+
+const STORY_FILE = path.join(__dirname, '../story.json');
+
+// Load story from file
+let story = ["Once", "upon", "a", "time", "there", "was"]; // default starter
+
+if (fs.existsSync(STORY_FILE)) {
+  try {
+    story = JSON.parse(fs.readFileSync(STORY_FILE, 'utf8'));
+  } catch (err) {
+    console.error("Error reading story file:", err);
+  }
+}
+
+module.exports = (client) => {
+  // Listen for messages in the story channel
+  client.on(Events.MessageCreate, async (message) => {
+    if (message.author.bot) return;
+
+    // === CHANGE THIS TO YOUR STORY CHANNEL ID ===
+    const STORY_CHANNEL_ID = 'YOUR_CHANNEL_ID_HERE';
+
+    if (message.channel.id !== STORY_CHANNEL_ID) return;
+
+    const content = message.content.trim();
+    if (!content) return;
+
+    const words = content.split(/\s+/);
+
+    // Limit contribution size
+    if (words.length > 6) {
+      return message.reply("❌ Please add **1 to 6 words** at a time to keep the story flowing!");
+    }
+
+    // Add to story
+    story.push(...words);
+
+    // Save to file
+    fs.writeFileSync(STORY_FILE, JSON.stringify(story, null, 2));
+
+    // React with success
+    await message.react('✅');
+
+    // Show last part of the story
+    const preview = story.slice(-25).join(' ');
+    await message.channel.send({
+      content: `**Story so far...** (${story.length} words)\n\n${preview}...`
+    });
+  });
+
+  // === Commands ===
+  client.on(Events.MessageCreate, async (message) => {
+    if (!message.content.startsWith('!')) return;
+
+    const args = message.content.slice(1).trim().split(/ +/);
+    const command = args.shift().toLowerCase();
+
+    if (command === 'story') {
+      const fullStory = story.join(' ');
+      
+      if (fullStory.length > 2000) {
+        await message.reply("📜 The story is too long to show here! Here's the last part:\n\n" + 
+          story.slice(-50).join(' '));
+      } else {
+        await message.reply(`**The Full Story** (${story.length} words):\n\n${fullStory}`);
+      }
+    }
+
+    if (command === 'resetstory' && message.member.permissions.has(PermissionsBitField.Flags.Administrator)) {
+      story = ["Once", "upon", "a", "time"];
+      fs.writeFileSync(STORY_FILE, JSON.stringify(story, null, 2));
+      await message.reply("🔄 Story has been reset!");
+    }
+  });
+};
