@@ -60,6 +60,7 @@ export default {
 
             const guildConfig = await getGuildConfig(client, guildId);
             const PREMIUM_ROLE_ID = guildConfig.premiumRoleId;
+            const shopRoleMap = guildConfig.shopRoleMap || {};
 
             const userData = await getEconomyData(client, guildId, userId);
 
@@ -94,6 +95,37 @@ export default {
                         "Invalid quantity for role",
                         ErrorTypes.VALIDATION,
                         `You can only purchase the **${item.name}** role once.`,
+                        { itemId, quantity }
+                    );
+                }
+            }
+
+            if (item.type === "color_role" || item.type === "access_role") {
+                const linkedRoleId = shopRoleMap[itemId];
+
+                if (userData.inventory?.[itemId]) {
+                    throw createError(
+                        "Item already owned",
+                        ErrorTypes.VALIDATION,
+                        `You already own **${item.name}**.`,
+                        { itemId }
+                    );
+                }
+
+                if (!linkedRoleId) {
+                    throw createError(
+                        "Item role not configured",
+                        ErrorTypes.CONFIGURATION,
+                        `**${item.name}** hasn't been linked to a Discord role yet. Ask a server admin to run \`/shop-config linkrole\`.`,
+                        { itemId }
+                    );
+                }
+
+                if (quantity > 1) {
+                    throw createError(
+                        "Invalid quantity for role item",
+                        ErrorTypes.VALIDATION,
+                        `You can only purchase **${item.name}** once.`,
                         { itemId, quantity }
                     );
                 }
@@ -139,6 +171,39 @@ export default {
             } else if (item.type === "consumable") {
                 userData.inventory[itemId] =
                     (userData.inventory[itemId] || 0) + quantity;
+            } else if (item.type === "color_role" || item.type === "access_role") {
+                const member = interaction.member;
+                const linkedRoleId = shopRoleMap[itemId];
+                const role = interaction.guild.roles.cache.get(linkedRoleId);
+
+                if (!role) {
+                    userData.wallet += totalCost;
+                    await setEconomyData(client, guildId, userId, userData);
+                    throw createError(
+                        "Role not found",
+                        ErrorTypes.CONFIGURATION,
+                        "The role linked to this item no longer exists in this server. Your cash has been refunded.",
+                        { roleId: linkedRoleId }
+                    );
+                }
+
+                try {
+                    await member.roles.add(role, `Purchased item: ${item.name}`);
+                    userData.inventory[itemId] = (userData.inventory[itemId] || 0) + 1;
+
+                    successDescription += item.type === "color_role"
+                        ? `\n\n**🎨 The ${role.toString()} color role has been granted! Use \`/color set\` to switch between colors you own.**`
+                        : `\n\n**⭐ You now have access to ${role.toString()}!**`;
+                } catch (roleError) {
+                    userData.wallet += totalCost;
+                    await setEconomyData(client, guildId, userId, userData);
+                    throw createError(
+                        "Role assignment failed",
+                        ErrorTypes.DISCORD_API,
+                        "Successfully deducted money, but failed to grant the role. Your cash has been refunded.",
+                        { roleId: linkedRoleId, originalError: roleError.message }
+                    );
+                }
             }
 
             await setEconomyData(client, guildId, userId, userData);
