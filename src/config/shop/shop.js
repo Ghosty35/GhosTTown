@@ -1,6 +1,13 @@
 // commands/shop/shop.js
 
-import { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits } from 'discord.js';
+import {
+    SlashCommandBuilder,
+    EmbedBuilder,
+    PermissionFlagsBits,
+    ActionRowBuilder,
+    StringSelectMenuBuilder,
+    ComponentType,
+} from 'discord.js';
 import { shopItems, getItemById } from '../../data/items.js'; // ← confirm this path
 import { purchaseItem, setItemRole, getOwnedItems } from '../../services/shopService.js';
 import { formatCurrency } from '../../utils/economy.js';
@@ -15,6 +22,15 @@ const buyChoices = shopItems.slice(0, 25).map((item) => ({
 const roleLinkableChoices = shopItems
     .filter((item) => item.type === 'color_role' || item.type === 'access_role')
     .map((item) => ({ name: item.name, value: item.id }));
+
+const CATEGORY_LABELS = {
+    tool: '🛠️ Tools',
+    consumable: '🎟️ Consumables',
+    upgrade: '⬆️ Upgrades',
+    role: '🎖️ Roles',
+    color_role: '🎨 Name Colors',
+    access_role: '⭐ Access',
+};
 
 const data = new SlashCommandBuilder()
     .setName('shop')
@@ -45,7 +61,45 @@ const data = new SlashCommandBuilder()
 
 function formatItemLine(item) {
     const emoji = item.emoji || '•';
-    return `${emoji} **${item.name}** — ${formatCurrency(item.price)}\n${item.description}`;
+    return `${emoji} **${item.name}** • 🪙 \`${formatCurrency(item.price)}\`\n*${item.description}*`;
+}
+
+function buildBrowseEmbed() {
+    const embed = new EmbedBuilder()
+        .setTitle('🛒 Server Shop')
+        .setDescription(
+            'Pick an item from the dropdown below to buy it **instantly**, or use `/shop buy` if you already know what you want.'
+        )
+        .setColor(0x5865f2);
+
+    for (const [type, label] of Object.entries(CATEGORY_LABELS)) {
+        const items = shopItems.filter((i) => i.type === type);
+        if (items.length === 0) continue;
+        embed.addFields({
+            name: `${label}`,
+            value: items.map(formatItemLine).join('\n\n'),
+        });
+    }
+
+    embed.setFooter({ text: `${shopItems.length} items available` });
+    return embed;
+}
+
+function buildBuySelectRow(disabled = false) {
+    const options = shopItems.slice(0, 25).map((item) => ({
+        label: item.name,
+        description: `${formatCurrency(item.price)} — ${item.description.slice(0, 90)}`,
+        value: item.id,
+        emoji: item.emoji || undefined,
+    }));
+
+    const menu = new StringSelectMenuBuilder()
+        .setCustomId('shop_buy_select')
+        .setPlaceholder(disabled ? 'This menu has expired — run /shop browse again' : '🛍️ Select an item to buy instantly')
+        .setDisabled(disabled)
+        .addOptions(options);
+
+    return new ActionRowBuilder().addComponents(menu);
 }
 
 async function execute(interaction) {
@@ -53,28 +107,31 @@ async function execute(interaction) {
     const client = interaction.client;
 
     if (sub === 'browse') {
-        const groups = {
-            tool: '🛠️ Tools',
-            consumable: '🎟️ Consumables',
-            upgrade: '⬆️ Upgrades',
-            role: '🎖️ Roles',
-            color_role: '🎨 Name Colors',
-            access_role: '⭐ Access',
-        };
+        const embed = buildBrowseEmbed();
+        const row = buildBuySelectRow();
 
-        const embed = new EmbedBuilder().setTitle('🛒 Server Shop').setColor(0xf1c40f);
+        const reply = await interaction.reply({ embeds: [embed], components: [row], fetchReply: true });
 
-        for (const [type, label] of Object.entries(groups)) {
-            const items = shopItems.filter((i) => i.type === type);
-            if (items.length === 0) continue;
-            embed.addFields({
-                name: label,
-                value: items.map(formatItemLine).join('\n\n'),
-            });
-        }
+        const collector = reply.createMessageComponentCollector({
+            componentType: ComponentType.StringSelect,
+            time: 120000, // dropdown stays active for 2 minutes
+        });
 
-        embed.setFooter({ text: 'Use /shop buy to purchase an item' });
-        return interaction.reply({ embeds: [embed] });
+        collector.on('collect', async (i) => {
+            if (i.user.id !== interaction.user.id) {
+                return i.reply({ content: "This isn't your shop menu — run `/shop browse` yourself!", ephemeral: true });
+            }
+            const itemId = i.values[0];
+            const result = await purchaseItem(client, interaction.guild, i.member, itemId);
+            await i.reply({ content: result.message, ephemeral: true });
+        });
+
+        collector.on('end', async () => {
+            const disabledRow = buildBuySelectRow(true);
+            await interaction.editReply({ components: [disabledRow] }).catch(() => {});
+        });
+
+        return;
     }
 
     if (sub === 'buy') {
