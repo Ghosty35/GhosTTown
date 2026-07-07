@@ -1,3 +1,4 @@
+// /home/workdir/GhosTTown-main/src/commands/Economy/modules/shop_browse.js
 import { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, StringSelectMenuBuilder, MessageFlags } from 'discord.js';
 import { shopItems } from '../../../config/shop/items.js';
 import { getColor } from '../../../config/bot.js';
@@ -18,28 +19,26 @@ export default {
             upgrade: '⬆️ Upgrades'
         };
 
-        const getFilteredItems = () => {
-            if (currentCategory === 'all') return shopItems;
-            return shopItems.filter(item => item.type === currentCategory);
-        };
+        const getFilteredItems = () => currentCategory === 'all' 
+            ? shopItems 
+            : shopItems.filter(i => i.type === currentCategory);
 
         const createEmbed = (page) => {
             const filtered = getFilteredItems();
-            const ITEMS_PER_PAGE = 4;
-            const start = (page - 1) * ITEMS_PER_PAGE;
-            const pageItems = filtered.slice(start, start + ITEMS_PER_PAGE);
-            const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
+            const perPage = 4;
+            const start = (page - 1) * perPage;
+            const items = filtered.slice(start, start + perPage);
 
             const embed = new EmbedBuilder()
-                .setTitle(`🛒 ${categories[currentCategory]} — Server Shop`)
+                .setTitle(`🛒 ${categories[currentCategory]} — Shop`)
                 .setColor(getColor('primary'))
-                .setDescription('Click **Buy** below any item to purchase instantly.')
-                .setFooter({ text: `Page ${page}/${totalPages || 1} • Use /item info for details` });
+                .setDescription('**Click "Buy"** to purchase instantly.')
+                .setFooter({ text: `Page ${page} • /buy <id> for manual purchase` });
 
-            pageItems.forEach(item => {
+            items.forEach(item => {
                 embed.addFields({
-                    name: `${item.emoji || '🔹'} ${item.name}`,
-                    value: `**Price:** 🪙 $${item.price.toLocaleString()}\n${item.description}`,
+                    name: `${item.emoji || '🔹'} ${item.name} (${item.id})`,
+                    value: `${item.description}\n**Price:** 🪙 **$${item.price.toLocaleString()}**`,
                     inline: false
                 });
             });
@@ -47,31 +46,30 @@ export default {
             return embed;
         };
 
-        const createCategoryRow = () => {
-            const options = Object.entries(categories).map(([value, label]) => ({
-                label: label.replace(/[\uD83C\uDF00-\uD83D\uDE4F\uD83D\uDE80-\uD83D\uDEF4]/g, '').trim(),
-                value: value,
-                default: value === currentCategory
+        const categoryRow = () => {
+            const opts = Object.entries(categories).map(([val, label]) => ({
+                label: label.replace(/[^a-zA-Z0-9 ]/g, '').trim(),
+                value: val,
+                default: val === currentCategory
             }));
 
             return new ActionRowBuilder().addComponents(
                 new StringSelectMenuBuilder()
                     .setCustomId('shop_category')
-                    .setPlaceholder('Select Category')
-                    .addOptions(options)
+                    .setPlaceholder('Choose Category')
+                    .addOptions(opts)
             );
         };
 
-        const createItemButtons = (page) => {
+        const actionRow = (page) => {
             const filtered = getFilteredItems();
-            const ITEMS_PER_PAGE = 4;
-            const start = (page - 1) * ITEMS_PER_PAGE;
-            const pageItems = filtered.slice(start, start + ITEMS_PER_PAGE);
+            const perPage = 4;
+            const start = (page - 1) * perPage;
+            const items = filtered.slice(start, start + perPage);
 
-            const row = new ActionRowBuilder();
-
-            pageItems.forEach(item => {
-                row.addComponents(
+            const buyRow = new ActionRowBuilder();
+            items.forEach(item => {
+                buyRow.addComponents(
                     new ButtonBuilder()
                         .setCustomId(`buy_${item.id}`)
                         .setLabel('Buy')
@@ -80,43 +78,40 @@ export default {
                 );
             });
 
-            // Navigation
             const navRow = new ActionRowBuilder().addComponents(
-                new ButtonBuilder().setCustomId('shop_prev').setLabel('⬅️').setStyle(ButtonStyle.Secondary).setDisabled(page === 1),
-                new ButtonBuilder().setCustomId('shop_next').setLabel('➡️').setStyle(ButtonStyle.Secondary).setDisabled(page >= Math.ceil(filtered.length / 4))
+                new ButtonBuilder().setCustomId('prev').setLabel('⬅️').setStyle(ButtonStyle.Secondary).setDisabled(page === 1),
+                new ButtonBuilder().setCustomId('next').setLabel('➡️').setStyle(ButtonStyle.Secondary).setDisabled(page * 4 >= filtered.length)
             );
 
-            return [row, navRow];
+            return [buyRow, navRow];
         };
 
         const msg = await interaction.reply({
             embeds: [createEmbed(currentPage)],
-            components: [createCategoryRow(), ...createItemButtons(currentPage)]
+            components: [categoryRow(), ...actionRow(currentPage)]
         });
 
         const collector = msg.createMessageComponentCollector({ time: 300000 });
 
-        collector.on('collect', async (i) => {
-            if (i.user.id !== interaction.user.id) {
-                return i.reply({ content: '❌ Not your shop.', flags: MessageFlags.Ephemeral });
-            }
+        collector.on('collect', async i => {
+            if (i.user.id !== interaction.user.id) return i.reply({ content: 'Not your shop.', flags: MessageFlags.Ephemeral });
 
             await i.deferUpdate();
 
             if (i.customId === 'shop_category') {
                 currentCategory = i.values[0];
                 currentPage = 1;
-            } else if (i.customId === 'shop_prev') currentPage--;
-            else if (i.customId === 'shop_next') currentPage++;
+            } else if (i.customId === 'prev') currentPage--;
+            else if (i.customId === 'next') currentPage++;
             else if (i.customId.startsWith('buy_')) {
-                const itemId = i.customId.replace('buy_', '');
-                const result = await purchaseItem(client, interaction.guild, interaction.member, itemId);
+                const itemId = i.customId.slice(4);
+                const result = await purchaseItem(client, interaction.guild, i.member, itemId);
                 return i.followUp({ content: result.message, ephemeral: true });
             }
 
             await i.editReply({
                 embeds: [createEmbed(currentPage)],
-                components: [createCategoryRow(), ...createItemButtons(currentPage)]
+                components: [categoryRow(), ...actionRow(currentPage)]
             });
         });
     }
