@@ -5,9 +5,9 @@ import { botConfig } from '../../config/bot.js';
 import { withErrorHandling, createError, ErrorTypes } from '../../utils/errorHandler.js';
 import { InteractionHelper } from '../../utils/interactionHelper.js';
 
-const COOLDOWN = 30 * 60 * 1000;
+const COOLDOWN = 3 * 60 * 1000;
 const MIN_WIN = 50;
-const MAX_WIN = 200;
+const MAX_WIN = 750;
 const SUCCESS_CHANCE = 0.7;
 
 export default {
