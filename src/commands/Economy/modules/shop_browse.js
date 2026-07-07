@@ -3,7 +3,7 @@ import { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, StringSelec
 import { shopItems } from '../../../config/shop/items.js';
 import { getColor } from '../../../config/bot.js';
 import { logger } from '../../../utils/logger.js';
-import { purchaseItem } from '../../services/shopService.js';
+import { purchaseItem } from '../../../services/shopService.js';
 
 export default {
     async execute(interaction, config, client) {
