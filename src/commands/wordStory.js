@@ -56,7 +56,7 @@ const path = require('path');
 const CONFIG = {
   // Channel where words are submitted and the finished story gets posted.
   // Right-click a channel in Discord (dev mode on) -> Copy Channel ID.
-  STORY_CHANNEL_ID: 'PUT_YOUR_CHANNEL_ID_HERE',
+  STORY_CHANNEL_ID: '1483155456649199677',
 
   // How long a round lasts before auto-finalizing. Change the first number.
   STORY_DURATION_MS: 7 * 24 * 60 * 60 * 1000, // 7 days
