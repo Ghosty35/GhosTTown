@@ -5,14 +5,14 @@ import { withErrorHandling, createError, ErrorTypes } from '../../utils/errorHan
 import { logger } from '../../utils/logger.js';
 import { InteractionHelper } from '../../utils/interactionHelper.js';
 
-const SLUT_COOLDOWN = 45 * 60 * 1000;
+const SLUT_COOLDOWN = 3 * 60 * 1000;
 
 const SLUT_ACTIVITIES = [
-    { name: "Cam Stream", min: 120, max: 450, risk: 0.2 },
-    { name: "Private Dance Session", min: 220, max: 700, risk: 0.25 },
-    { name: "After-Hours Club Host", min: 320, max: 900, risk: 0.3 },
-    { name: "VIP Companion Booking", min: 550, max: 1400, risk: 0.35 },
-    { name: "Exclusive Livestream", min: 850, max: 2200, risk: 0.4 },
+    { name: "Cam Stream", min: 1200, max: 2500, risk: 0.2 },
+    { name: "Private Dance Session", min: 1500, max: 3000, risk: 0.25 },
+    { name: "After-Hours Club Host", min: 2000, max: 3500, risk: 0.3 },
+    { name: "VIP Companion Booking", min: 5500, max: 14000, risk: 0.35 },
+    { name: "Exclusive Livestream", min: 8500, max: 22000, risk: 0.4 },
 ];
 
 const POSITIVE_OUTCOMES = [
