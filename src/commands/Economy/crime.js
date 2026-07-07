@@ -8,7 +8,7 @@ const CRIME_COOLDOWN = 2 * 60 * 1000;
 const MIN_CRIME_AMOUNT = 100;
 const MAX_CRIME_AMOUNT = 2000;
 const FAILURE_RATE = 0.4;
-const JAIL_TIME = 3 * 60 * 1000;
+const JAIL_TIME = 2 * 60 * 1000;
 
 const CRIME_TYPES = [
     { name: "Pickpocketing", min: 150, max: 1500, risk: 0.3 },
