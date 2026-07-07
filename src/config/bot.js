@@ -183,6 +183,15 @@ export const botConfig = {
     begMin: 10,
     begMax: 500,
 
+    // Passive coin earnings from chatting.
+    // Members earn a small random amount just for sending messages,
+    // with a per-user cooldown so it can't be spammed.
+    chatEarnEnabled: true,
+    chatEarnMin: 1,
+    chatEarnMax: 5,
+    chatEarnCooldown: 60000, // 1 minute between earning triggers per user
+    chatEarnMinLength: 5, // ignore very short spam messages like "k" or "lol"
+
     // Chance to succeed when robbing (0.4 = 40%).
     robSuccessRate: 0.0,
 
