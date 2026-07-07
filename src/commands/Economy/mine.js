@@ -4,9 +4,9 @@ import { getEconomyData, setEconomyData } from '../../utils/economy.js';
 import { withErrorHandling, createError, ErrorTypes } from '../../utils/errorHandler.js';
 import { InteractionHelper } from '../../utils/interactionHelper.js';
 
-const MINE_COOLDOWN = 60 * 60 * 1000;
+const MINE_COOLDOWN = 3 * 60 * 1000;
 const BASE_MIN_REWARD = 400;
-const BASE_MAX_REWARD = 1200;
+const BASE_MAX_REWARD = 1500;
 const PICKAXE_MULTIPLIER = 1.2;
 const DIAMOND_PICKAXE_MULTIPLIER = 2.0;
 
