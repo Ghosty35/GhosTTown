@@ -8,6 +8,7 @@ import { supportsPrefixExecution, executePrefixCommand, resolvePrefixAccessKey }
 import { resolveCommandAlias, resolveSubcommandAlias } from '../config/commandAliases.js';
 import { getPrefixRestriction } from '../config/prefixRestrictions.js';
 import { getGuildConfig } from '../services/guildConfig.js';
+import { getEconomyData, setEconomyData } from '../utils/economy.js';
 import { enforceAbuseProtection, formatCooldownDuration } from '../utils/abuseProtection.js';
 import { createEmbed } from '../utils/embeds.js';
 import { isCommandEnabled } from '../services/commandAccessService.js';
@@ -37,6 +38,8 @@ export default {
       await handlePrefixCommand(message, client);
 
       await handleLeveling(message, client);
+
+      await handleChatEarnings(message, client);
     } catch (error) {
       logger.error('Error in messageCreate event:', error);
     }
@@ -156,6 +159,48 @@ async function handleCountingGame(message, client) {
   } catch (error) {
     logger.error('Error handling counting game:', error);
     return false;
+  }
+}
+
+async function handleChatEarnings(message, client) {
+  try {
+    const economyConfig = client.config?.economy || {};
+
+    if (economyConfig.chatEarnEnabled === false) {
+      return;
+    }
+
+    const minLength = economyConfig.chatEarnMinLength ?? 5;
+    if (!message.content || message.content.trim().length < minLength) {
+      return;
+    }
+
+    // Spam guard: same throttle pattern as leveling, separate rate-limit key
+    // so a chatty user can't burn through both budgets with one flood.
+    const rateLimitKey = `chat-earn:${message.guild.id}:${message.author.id}`;
+    const canProcess = await checkRateLimit(rateLimitKey, MESSAGE_XP_RATE_LIMIT_ATTEMPTS, MESSAGE_XP_RATE_LIMIT_WINDOW_MS);
+    if (!canProcess) {
+      return;
+    }
+
+    const userData = await getEconomyData(client, message.guild.id, message.author.id);
+    const cooldownMs = economyConfig.chatEarnCooldown ?? 60000;
+    const now = Date.now();
+
+    if (now - (userData.lastChatEarn || 0) < cooldownMs) {
+      return;
+    }
+
+    const min = economyConfig.chatEarnMin ?? 1;
+    const max = economyConfig.chatEarnMax ?? 5;
+    const amount = Math.floor(Math.random() * (max - min + 1)) + min;
+
+    userData.wallet = (userData.wallet || 0) + amount;
+    userData.lastChatEarn = now;
+
+    await setEconomyData(client, message.guild.id, message.author.id, userData);
+  } catch (error) {
+    logger.error('Error handling chat earnings:', error);
   }
 }
 
