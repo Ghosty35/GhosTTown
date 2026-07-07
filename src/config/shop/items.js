@@ -134,6 +134,72 @@ roleId: null,
             type: 'robbery_protection',
             protection: true
         }
+    },
+
+    // -------------------------------------------------------------------
+    // NEW: Name color roles — one-time purchase, unlocks the color forever.
+    // Owners can switch between any colors they own with /color set.
+    // An admin must link each of these to a real Discord role using
+    // /shop setrole after creating the roles in your server.
+    // -------------------------------------------------------------------
+    {
+        id: 'color_ruby',
+        name: 'Ruby Red',
+        emoji: '❤️',
+        price: 3000,
+        description: 'Unlocks the Ruby Red name color. Switch to it anytime with /color set.',
+        type: 'color_role',
+        colorHex: '#E0115F'
+    },
+    {
+        id: 'color_sapphire',
+        name: 'Sapphire Blue',
+        emoji: '💙',
+        price: 3000,
+        description: 'Unlocks the Sapphire Blue name color.',
+        type: 'color_role',
+        colorHex: '#0F52BA'
+    },
+    {
+        id: 'color_emerald',
+        name: 'Emerald Green',
+        emoji: '💚',
+        price: 3000,
+        description: 'Unlocks the Emerald Green name color.',
+        type: 'color_role',
+        colorHex: '#50C878'
+    },
+    {
+        id: 'color_gold',
+        name: 'Golden',
+        emoji: '💛',
+        price: 4000,
+        description: 'Unlocks the Golden name color.',
+        type: 'color_role',
+        colorHex: '#FFD700'
+    },
+    {
+        id: 'color_amethyst',
+        name: 'Amethyst Purple',
+        emoji: '💜',
+        price: 3500,
+        description: 'Unlocks the Amethyst Purple name color.',
+        type: 'color_role',
+        colorHex: '#9966CC'
+    },
+
+    // -------------------------------------------------------------------
+    // NEW: VIP access — one-time purchase, permanently grants a role.
+    // Lock a channel to this role in Discord's channel permissions to
+    // create a members-only area. No bot code needed for the lock itself.
+    // -------------------------------------------------------------------
+    {
+        id: 'vip_access',
+        name: 'VIP Access',
+        emoji: '⭐',
+        price: 20000,
+        description: 'Unlocks access to the VIP area of the server, permanently.',
+        type: 'access_role'
     }
 ];
 
@@ -197,6 +263,15 @@ export function validatePurchase(itemId, userData) {
                 reason: `You already have the ${item.name} role` 
             };
         }
+    }
+
+    // NEW: color roles and access roles are one-time purchases, tracked
+    // the same way as tools/consumables — in userData.inventory.
+    if ((item.type === 'color_role' || item.type === 'access_role') && inventory[itemId]) {
+        return {
+            valid: false,
+            reason: `You already own ${item.name}`
+        };
     }
 
     return { valid: true };
