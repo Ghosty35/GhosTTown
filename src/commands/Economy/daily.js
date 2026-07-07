@@ -8,8 +8,8 @@ import { logger } from '../../utils/logger.js';
 import { InteractionHelper } from '../../utils/interactionHelper.js';
 
 const DAILY_COOLDOWN = 24 * 60 * 60 * 1000;
-const DAILY_AMOUNT = 1000;
-const PREMIUM_BONUS_PERCENTAGE = 0.1;
+const DAILY_AMOUNT = 10000;
+const PREMIUM_BONUS_PERCENTAGE = 0.2;
 
 export default {
     data: new SlashCommandBuilder()
