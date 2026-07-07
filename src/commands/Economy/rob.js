@@ -5,8 +5,8 @@ import { withErrorHandling, createError, ErrorTypes } from '../../utils/errorHan
 import { InteractionHelper } from '../../utils/interactionHelper.js';
 
 const ROB_COOLDOWN = 4 * 60 * 60 * 1000;
-const BASE_ROB_SUCCESS_CHANCE = 0.25;
-const ROB_PERCENTAGE = 0.15;
+const BASE_ROB_SUCCESS_CHANCE = 0.05;
+const ROB_PERCENTAGE = 0.05;
 const FINE_PERCENTAGE = 0.1;
 
 export default {
