@@ -1,181 +1,120 @@
 // shopService.js
 //
-// Handles buying shop items, tracking ownership, and granting/switching
-// Discord roles for color and access items. Built on top of your existing
-// utils/economy.js (balance) and items.js (catalog + validation).
-//
-// ⚠️ IMPORT PATH: economy.js's own imports show it lives in `utils/`, so
-// that import below should be correct. items.js's location wasn't
-// confirmed — adjust the path below to wherever you place the updated
-// items.js file (e.g. '../data/items.js', '../utils/items.js', etc).
+// Centralized shop purchase logic. Both /buy and the shop browser's
+// "Buy" buttons call this same function, so purchase rules only live
+// in one place instead of being duplicated (and drifting out of sync).
 
-import { getEconomyData, setEconomyData, removeMoney, formatCurrency } from '../utils/economy.js';
-import { getItemById, validatePurchase, shopItems } from '../data/items.js'; // ← confirm this path
+import { getEconomyData, setEconomyData } from '../utils/economy.js';
+import { getGuildConfig } from './guildConfig.js';
+import { getItemById } from '../config/shop/items.js';
 import { logger } from '../utils/logger.js';
 
-// -----------------------------------------------------------------------
-// PER-GUILD ROLE CONFIG
-// Maps a shop item id -> the actual Discord role id an admin created for
-// it. Discord role IDs are different in every server, so this has to be
-// configured per guild rather than hardcoded in the catalog.
-// -----------------------------------------------------------------------
-function configKey(guildId) {
-    return `shop-roles:${guildId}`;
-}
-
-export async function getShopRoleConfig(client, guildId) {
-    const config = await client.db.get(configKey(guildId));
-    return config || { roleMap: {} };
-}
-
-export async function setItemRole(client, guildId, itemId, roleId) {
-    const config = await getShopRoleConfig(client, guildId);
-    config.roleMap[itemId] = roleId;
-    await client.db.set(configKey(guildId), config);
-    return config;
-}
-
-// -----------------------------------------------------------------------
-// PURCHASING
-// Works for every item type in your catalog (consumable, upgrade, tool,
-// role, and the new color_role / access_role types) using items.js's own
-// validatePurchase as the source of truth for eligibility.
-// -----------------------------------------------------------------------
-export async function purchaseItem(client, guild, member, itemId) {
+/**
+ * Attempts to purchase an item for a member.
+ * Returns { success: boolean, message: string }
+ */
+export async function purchaseItem(client, guild, member, itemId, quantity = 1) {
     const item = getItemById(itemId);
     if (!item) {
-        return { success: false, message: 'That item does not exist.' };
+        return { success: false, message: `❌ Item \`${itemId}\` not found.` };
+    }
+
+    if (quantity < 1) {
+        return { success: false, message: '❌ You must purchase a quantity of 1 or more.' };
     }
 
     const guildId = guild.id;
     const userId = member.id;
+    const totalCost = item.price * quantity;
+
+    const guildConfig = await getGuildConfig(client, guildId);
+    const PREMIUM_ROLE_ID = guildConfig.premiumRoleId;
+    const shopRoleMap = guildConfig.shopRoleMap || {};
+
     const userData = await getEconomyData(client, guildId, userId);
 
-    const check = validatePurchase(itemId, userData);
-    if (!check.valid) {
-        return { success: false, message: check.reason };
-    }
-
-    if ((userData.wallet || 0) < item.price) {
+    if (userData.wallet < totalCost) {
         return {
             success: false,
-            message: `You need ${formatCurrency(item.price)} but only have ${formatCurrency(userData.wallet || 0)}.`,
+            message: `❌ You need **$${totalCost.toLocaleString()}** for ${quantity}x **${item.name}**, but you only have **$${userData.wallet.toLocaleString()}**.`,
         };
     }
 
-    const removal = await removeMoney(client, guildId, userId, item.price, 'wallet');
-    if (!removal.success) {
-        return { success: false, message: removal.error || 'Purchase failed. Please try again.' };
+    // --- Pre-purchase validation ---
+    if (item.type === 'role' && itemId === 'premium_role') {
+        if (!PREMIUM_ROLE_ID) {
+            return { success: false, message: 'The **Premium Shop Role** has not been configured by a server admin yet.' };
+        }
+        if (member.roles.cache.has(PREMIUM_ROLE_ID)) {
+            return { success: false, message: `You already have the **${item.name}** role.` };
+        }
+        if (quantity > 1) {
+            return { success: false, message: `You can only purchase **${item.name}** once.` };
+        }
     }
 
-    // Re-fetch so we're updating the freshest copy after payment
-    const updated = await getEconomyData(client, guildId, userId);
-    updated.inventory = updated.inventory || {};
-    updated.upgrades = updated.upgrades || {};
-
-    if (item.type === 'consumable' || item.type === 'tool') {
-        updated.inventory[itemId] = (updated.inventory[itemId] || 0) + 1;
-    } else if (item.type === 'upgrade') {
-        updated.upgrades[itemId] = true;
-    } else if (item.type === 'color_role' || item.type === 'access_role') {
-        updated.inventory[itemId] = true;
-    }
-
-    await setEconomyData(client, guildId, userId, updated);
-
-    let roleNote = '';
     if (item.type === 'color_role' || item.type === 'access_role') {
-        const config = await getShopRoleConfig(client, guildId);
-        const roleId = config.roleMap[itemId];
-
-        if (roleId) {
-            try {
-                await member.roles.add(roleId, `Purchased ${item.name}`);
-            } catch (error) {
-                logger.error(`Failed to grant role for item ${itemId} to user ${userId}:`, error);
-                roleNote =
-                    "\n⚠️ I couldn't assign the Discord role — ask an admin to check that my role sits above it in the role list, and that I have Manage Roles permission.";
-            }
-        } else {
-            roleNote =
-                "\n⚠️ An admin hasn't linked a Discord role to this item yet (`/shop setrole`), so nothing visually changed. Your purchase is saved though — the role will apply once it's linked.";
+        if (userData.inventory?.[itemId]) {
+            return { success: false, message: `You already own **${item.name}**.` };
+        }
+        if (!shopRoleMap[itemId]) {
+            return {
+                success: false,
+                message: `**${item.name}** hasn't been linked to a Discord role yet. Ask an admin to run \`/shop-config linkrole\`.`,
+            };
+        }
+        if (quantity > 1) {
+            return { success: false, message: `You can only purchase **${item.name}** once.` };
         }
     }
 
-    return {
-        success: true,
-        message: `✅ Purchased **${item.name}** for ${formatCurrency(item.price)}!${roleNote}`,
-    };
-}
-
-// -----------------------------------------------------------------------
-// COLOR SWITCHING
-// Lets someone switch between any color roles they already own, without
-// paying again. Removes any other owned+configured color role they
-// currently have, then adds the requested one.
-// -----------------------------------------------------------------------
-export async function setActiveColor(client, guild, member, itemId) {
-    const item = getItemById(itemId);
-    if (!item || item.type !== 'color_role') {
-        return { success: false, message: 'That is not a color item.' };
-    }
-
-    const userData = await getEconomyData(client, guild.id, member.id);
-    if (!userData.inventory?.[itemId]) {
-        return { success: false, message: `You don't own **${item.name}** yet — buy it with \`/shop buy\` first.` };
-    }
-
-    const config = await getShopRoleConfig(client, guild.id);
-    const newRoleId = config.roleMap[itemId];
-    if (!newRoleId) {
-        return {
-            success: false,
-            message: `An admin hasn't linked a Discord role to **${item.name}** yet — ask them to run \`/shop setrole\`.`,
-        };
-    }
-
-    const allColorItemIds = shopItems.filter((i) => i.type === 'color_role').map((i) => i.id);
-    const rolesToRemove = allColorItemIds
-        .map((id) => config.roleMap[id])
-        .filter(Boolean)
-        .filter((roleId) => roleId !== newRoleId && member.roles.cache.has(roleId));
-
-    for (const roleId of rolesToRemove) {
-        await member.roles.remove(roleId).catch((error) => {
-            logger.error(`Failed to remove old color role ${roleId} from ${member.id}:`, error);
-        });
-    }
-
-    try {
-        await member.roles.add(newRoleId);
-    } catch (error) {
-        logger.error(`Failed to add color role ${newRoleId} to ${member.id}:`, error);
-        return {
-            success: false,
-            message: "❌ I couldn't assign that role — ask an admin to check my role position and permissions.",
-        };
-    }
-
-    return { success: true, message: `✅ Your name color is now **${item.name}**!` };
-}
-
-// -----------------------------------------------------------------------
-// INVENTORY DISPLAY
-// -----------------------------------------------------------------------
-export async function getOwnedItems(client, guildId, userId) {
-    const userData = await getEconomyData(client, guildId, userId);
-    const owned = [];
-
-    for (const item of shopItems) {
-        if (item.type === 'consumable' || item.type === 'tool') {
-            const qty = userData.inventory?.[item.id] || 0;
-            if (qty > 0) owned.push(`${item.emoji || '•'} ${item.name} x${qty}`);
-        } else if (item.type === 'upgrade') {
-            if (userData.upgrades?.[item.id]) owned.push(`${item.emoji || '•'} ${item.name}`);
-        } else if (item.type === 'color_role' || item.type === 'access_role') {
-            if (userData.inventory?.[item.id]) owned.push(`${item.emoji || '•'} ${item.name}`);
+    // --- Grant roles FIRST (before charging), so a failed role assignment
+    //     never costs the member money ---
+    if (item.type === 'role' && itemId === 'premium_role') {
+        const role = guild.roles.cache.get(PREMIUM_ROLE_ID);
+        if (!role) {
+            return { success: false, message: 'The configured premium role no longer exists in this server.' };
+        }
+        try {
+            await member.roles.add(role, `Purchased role: ${item.name}`);
+        } catch (error) {
+            logger.error(`Failed to grant premium role to ${userId}:`, error);
+            return { success: false, message: "I couldn't assign the role — ask an admin to check my permissions and role position. You haven't been charged." };
+        }
+    } else if (item.type === 'color_role' || item.type === 'access_role') {
+        const roleId = shopRoleMap[itemId];
+        const role = guild.roles.cache.get(roleId);
+        if (!role) {
+            return { success: false, message: 'The role linked to this item no longer exists in this server.' };
+        }
+        try {
+            await member.roles.add(role, `Purchased item: ${item.name}`);
+        } catch (error) {
+            logger.error(`Failed to grant item role for ${itemId} to ${userId}:`, error);
+            return { success: false, message: "I couldn't assign the role — ask an admin to check my permissions and role position. You haven't been charged." };
         }
     }
 
-    return owned;
+    // --- Charge and update inventory/upgrades ---
+    userData.wallet -= totalCost;
+    let successMessage = `✅ Purchased ${quantity}x **${item.name}** for **$${totalCost.toLocaleString()}**!`;
+
+    if (item.type === 'role' && itemId === 'premium_role') {
+        const role = guild.roles.cache.get(PREMIUM_ROLE_ID);
+        successMessage += `\n\n👑 The role ${role.toString()} has been granted!`;
+    } else if (item.type === 'upgrade') {
+        userData.upgrades[itemId] = true;
+        successMessage += `\n\n✨ Your upgrade is now active!`;
+    } else if (item.type === 'consumable') {
+        userData.inventory[itemId] = (userData.inventory[itemId] || 0) + quantity;
+    } else if (item.type === 'color_role' || item.type === 'access_role') {
+        const role = guild.roles.cache.get(shopRoleMap[itemId]);
+        userData.inventory[itemId] = (userData.inventory[itemId] || 0) + 1;
+        successMessage += item.type === 'color_role'
+            ? `\n\n🎨 The ${role.toString()} color role has been granted! Use \`/color set\` to switch between colors you own.`
+            : `\n\n⭐ You now have access to ${role.toString()}!`;
+    }
+
+    await setEconomyData(client, guildId, userId, userData);
+    return { success: true, message: successMessage };
 }
