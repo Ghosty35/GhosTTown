@@ -4,15 +4,15 @@ import { getEconomyData, setEconomyData } from '../../utils/economy.js';
 import { withErrorHandling, createError, ErrorTypes } from '../../utils/errorHandler.js';
 import { InteractionHelper } from '../../utils/interactionHelper.js';
 
-const CRIME_COOLDOWN = 60 * 60 * 1000;
+const CRIME_COOLDOWN = 2 * 60 * 1000;
 const MIN_CRIME_AMOUNT = 100;
 const MAX_CRIME_AMOUNT = 2000;
 const FAILURE_RATE = 0.4;
-const JAIL_TIME = 2 * 60 * 60 * 1000;
+const JAIL_TIME = 3 * 60 * 1000;
 
 const CRIME_TYPES = [
-    { name: "Pickpocketing", min: 100, max: 500, risk: 0.3 },
-    { name: "Burglary", min: 300, max: 1000, risk: 0.4 },
+    { name: "Pickpocketing", min: 150, max: 1500, risk: 0.3 },
+    { name: "Burglary", min: 300, max: 2500, risk: 0.4 },
     { name: "Bank Heist", min: 1000, max: 5000, risk: 0.6 },
     { name: "Art Theft", min: 2000, max: 10000, risk: 0.7 },
     { name: "Cybercrime", min: 5000, max: 20000, risk: 0.8 },
