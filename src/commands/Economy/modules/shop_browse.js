@@ -1,95 +1,123 @@
-import { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, MessageFlags } from 'discord.js';
+import { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, StringSelectMenuBuilder, MessageFlags } from 'discord.js';
 import { shopItems } from '../../../config/shop/items.js';
 import { getColor } from '../../../config/bot.js';
 import { logger } from '../../../utils/logger.js';
+import { purchaseItem } from '../../services/shopService.js';
 
 export default {
     async execute(interaction, config, client) {
-        try {
-            const ITEMS_PER_PAGE = 5; // Nice number for clean pages
-            const totalPages = Math.ceil(shopItems.length / ITEMS_PER_PAGE);
-            let currentPage = 1;
+        let currentCategory = 'all';
+        let currentPage = 1;
 
-            const createShopEmbed = (page) => {
-                const start = (page - 1) * ITEMS_PER_PAGE;
-                const pageItems = shopItems.slice(start, start + ITEMS_PER_PAGE);
+        const categories = {
+            all: 'All Items',
+            tool: '🛠️ Tools',
+            color_role: '🌈 Colors',
+            consumable: '🍀 Consumables',
+            access_role: '⭐ VIP',
+            upgrade: '⬆️ Upgrades'
+        };
 
-                const embed = new EmbedBuilder()
-                    .setTitle('🛒 Server Shop')
-                    .setColor(getColor('primary'))
-                    .setDescription(
-                        '**Click a button below to instantly buy an item**, or use the `/buy` command.\n' +
-                        'For details before buying, use `/item info <id>`.'
-                    )
-                    .setFooter({ text: `Page ${page}/${totalPages} • Economy Shop` });
+        const getFilteredItems = () => {
+            if (currentCategory === 'all') return shopItems;
+            return shopItems.filter(item => item.type === currentCategory);
+        };
 
-                pageItems.forEach(item => {
-                    const price = item.price.toLocaleString();
-                    embed.addFields({
-                        name: `${item.emoji || '🔹'} ${item.name} (${item.id})`,
-                        value: `${item.description}\n**Price:** 🪙 **$${price}**`,
-                        inline: false
-                    });
+        const createEmbed = (page) => {
+            const filtered = getFilteredItems();
+            const ITEMS_PER_PAGE = 4;
+            const start = (page - 1) * ITEMS_PER_PAGE;
+            const pageItems = filtered.slice(start, start + ITEMS_PER_PAGE);
+            const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
+
+            const embed = new EmbedBuilder()
+                .setTitle(`🛒 ${categories[currentCategory]} — Server Shop`)
+                .setColor(getColor('primary'))
+                .setDescription('Click **Buy** below any item to purchase instantly.')
+                .setFooter({ text: `Page ${page}/${totalPages || 1} • Use /item info for details` });
+
+            pageItems.forEach(item => {
+                embed.addFields({
+                    name: `${item.emoji || '🔹'} ${item.name}`,
+                    value: `**Price:** 🪙 $${item.price.toLocaleString()}\n${item.description}`,
+                    inline: false
                 });
+            });
 
-                return embed;
-            };
+            return embed;
+        };
 
-            const createButtons = (page) => {
-                return new ActionRowBuilder().addComponents(
+        const createCategoryRow = () => {
+            const options = Object.entries(categories).map(([value, label]) => ({
+                label: label.replace(/[\uD83C\uDF00-\uD83D\uDE4F\uD83D\uDE80-\uD83D\uDEF4]/g, '').trim(),
+                value: value,
+                default: value === currentCategory
+            }));
+
+            return new ActionRowBuilder().addComponents(
+                new StringSelectMenuBuilder()
+                    .setCustomId('shop_category')
+                    .setPlaceholder('Select Category')
+                    .addOptions(options)
+            );
+        };
+
+        const createItemButtons = (page) => {
+            const filtered = getFilteredItems();
+            const ITEMS_PER_PAGE = 4;
+            const start = (page - 1) * ITEMS_PER_PAGE;
+            const pageItems = filtered.slice(start, start + ITEMS_PER_PAGE);
+
+            const row = new ActionRowBuilder();
+
+            pageItems.forEach(item => {
+                row.addComponents(
                     new ButtonBuilder()
-                        .setCustomId('shop_prev')
-                        .setLabel('⬅️ Previous')
-                        .setStyle(ButtonStyle.Secondary)
-                        .setDisabled(page === 1),
-                    new ButtonBuilder()
-                        .setCustomId('shop_next')
-                        .setLabel('Next ➡️')
-                        .setStyle(ButtonStyle.Secondary)
-                        .setDisabled(page === totalPages)
+                        .setCustomId(`buy_${item.id}`)
+                        .setLabel('Buy')
+                        .setStyle(ButtonStyle.Success)
+                        .setEmoji('🛒')
                 );
-            };
-
-            const reply = await interaction.reply({
-                embeds: [createShopEmbed(currentPage)],
-                components: [createButtons(currentPage)],
             });
 
-            const collector = reply.createMessageComponentCollector({
-                componentType: 'BUTTON',
-                time: 300_000, // 5 minutes
+            // Navigation
+            const navRow = new ActionRowBuilder().addComponents(
+                new ButtonBuilder().setCustomId('shop_prev').setLabel('⬅️').setStyle(ButtonStyle.Secondary).setDisabled(page === 1),
+                new ButtonBuilder().setCustomId('shop_next').setLabel('➡️').setStyle(ButtonStyle.Secondary).setDisabled(page >= Math.ceil(filtered.length / 4))
+            );
+
+            return [row, navRow];
+        };
+
+        const msg = await interaction.reply({
+            embeds: [createEmbed(currentPage)],
+            components: [createCategoryRow(), ...createItemButtons(currentPage)]
+        });
+
+        const collector = msg.createMessageComponentCollector({ time: 300000 });
+
+        collector.on('collect', async (i) => {
+            if (i.user.id !== interaction.user.id) {
+                return i.reply({ content: '❌ Not your shop.', flags: MessageFlags.Ephemeral });
+            }
+
+            await i.deferUpdate();
+
+            if (i.customId === 'shop_category') {
+                currentCategory = i.values[0];
+                currentPage = 1;
+            } else if (i.customId === 'shop_prev') currentPage--;
+            else if (i.customId === 'shop_next') currentPage++;
+            else if (i.customId.startsWith('buy_')) {
+                const itemId = i.customId.replace('buy_', '');
+                const result = await purchaseItem(client, interaction.guild, interaction.member, itemId);
+                return i.followUp({ content: result.message, ephemeral: true });
+            }
+
+            await i.editReply({
+                embeds: [createEmbed(currentPage)],
+                components: [createCategoryRow(), ...createItemButtons(currentPage)]
             });
-
-            collector.on('collect', async (i) => {
-                if (i.user.id !== interaction.user.id) {
-                    return i.reply({ content: '❌ This shop belongs to someone else.', flags: MessageFlags.Ephemeral });
-                }
-
-                await i.deferUpdate();
-
-                if (i.customId === 'shop_prev') currentPage = Math.max(1, currentPage - 1);
-                if (i.customId === 'shop_next') currentPage = Math.min(totalPages, currentPage + 1);
-
-                await i.editReply({
-                    embeds: [createShopEmbed(currentPage)],
-                    components: [createButtons(currentPage)],
-                });
-            });
-
-            collector.on('end', async () => {
-                try {
-                    const disabled = createButtons(currentPage);
-                    disabled.components.forEach(b => b.setDisabled(true));
-                    await reply.edit({ components: [disabled] });
-                } catch (_) {}
-            });
-
-        } catch (error) {
-            logger.error('Shop browse error:', error);
-            await interaction.reply({ 
-                content: '❌ Failed to load the shop.', 
-                flags: MessageFlags.Ephemeral 
-            });
-        }
+        });
     }
 };
