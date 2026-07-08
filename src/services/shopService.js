@@ -113,6 +113,9 @@ export async function purchaseItem(client, guild, member, itemId, quantity = 1) 
         successMessage += item.type === 'color_role'
             ? `\n\n🎨 The ${role.toString()} color role has been granted! Use \`/color set\` to switch between colors you own.`
             : `\n\n⭐ You now have access to ${role.toString()}!`;
+    } else if (item.type === 'license') {
+        userData.inventory[itemId] = true;
+        successMessage += `\n\n📋 License acquired! Use \`/job apply\` to start working.`;
     }
 
     await setEconomyData(client, guildId, userId, userData);
