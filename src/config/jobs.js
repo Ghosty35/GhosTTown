@@ -10,7 +10,7 @@ export const jobs = [
         name: 'Bank Manager',
         emoji: '🏦',
         description: 'Keep Ghost Savings and Loans running smoothly.',
-        weeklyPay: { min: 60000, max: 90000 },
+        weeklyPay: { min: 180000, max: 270000 },
         licenseId: 'license_bank_manager',
     },
     {
@@ -18,7 +18,7 @@ export const jobs = [
         name: 'Car Mechanic',
         emoji: '🔧',
         description: 'Fix up rides for the townsfolk.',
-        weeklyPay: { min: 40000, max: 65000 },
+        weeklyPay: { min: 120000, max: 195000 },
         licenseId: 'license_car_mechanic',
     },
     {
@@ -26,7 +26,7 @@ export const jobs = [
         name: 'Scammer',
         emoji: '🎭',
         description: 'Run "creative" business schemes around town.',
-        weeklyPay: { min: 45000, max: 80000 },
+        weeklyPay: { min: 135000, max: 240000 },
         licenseId: 'license_scammer',
     },
     {
@@ -34,7 +34,7 @@ export const jobs = [
         name: 'Hacker',
         emoji: '💻',
         description: 'Break into systems nobody asked you to break into.',
-        weeklyPay: { min: 70000, max: 110000 },
+        weeklyPay: { min: 210000, max: 330000 },
         licenseId: 'license_hacker',
     },
     {
@@ -42,7 +42,7 @@ export const jobs = [
         name: 'Delivery Driver',
         emoji: '🚚',
         description: 'Haul packages across GhostTown, rain or shine.',
-        weeklyPay: { min: 30000, max: 50000 },
+        weeklyPay: { min: 90000, max: 150000 },
         licenseId: 'license_delivery_driver',
     },
     {
@@ -50,7 +50,7 @@ export const jobs = [
         name: 'Chef',
         emoji: '👨‍🍳',
         description: 'Cook up a storm at the local diner.',
-        weeklyPay: { min: 35000, max: 55000 },
+        weeklyPay: { min: 105000, max: 165000 },
         licenseId: 'license_chef',
     },
 ];

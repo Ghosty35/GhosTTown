@@ -9,13 +9,13 @@
 // investmentService.js for the activity tiers.
 
 export const investments = [
-    { symbol: 'GHST', name: 'Ghost Corp', emoji: '👻', basePrice: 450, volatility: 0.08 },
-    { symbol: 'TOWN', name: 'Town Holdings', emoji: '🏙️', basePrice: 1200, volatility: 0.05 },
-    { symbol: 'MOON', name: 'MoonShot Ventures', emoji: '🚀', basePrice: 150, volatility: 0.15 },
-    { symbol: 'GOLD', name: 'Golden Reserve', emoji: '🥇', basePrice: 2500, volatility: 0.03 },
-    { symbol: 'CRYP', name: 'CryptoCoin', emoji: '🪙', basePrice: 85, volatility: 0.20 },
-    { symbol: 'FARM', name: 'Farmland Co-op', emoji: '🌾', basePrice: 350, volatility: 0.04 },
-    { symbol: 'SRVX', name: 'Server Exchange', emoji: '📊', basePrice: 1000, volatility: 0.06, activityDriven: true },
+    { symbol: 'GHST', name: 'Ghost Corp', emoji: '👻', basePrice: 900, volatility: 0.10 },
+    { symbol: 'TOWN', name: 'Town Holdings', emoji: '🏙️', basePrice: 2500, volatility: 0.06 },
+    { symbol: 'MOON', name: 'MoonShot Ventures', emoji: '🚀', basePrice: 300, volatility: 0.18 },
+    { symbol: 'GOLD', name: 'Golden Reserve', emoji: '🥇', basePrice: 5000, volatility: 0.04 },
+    { symbol: 'CRYP', name: 'CryptoCoin', emoji: '🪙', basePrice: 175, volatility: 0.25 },
+    { symbol: 'FARM', name: 'Farmland Co-op', emoji: '🌾', basePrice: 700, volatility: 0.05 },
+    { symbol: 'SRVX', name: 'Server Exchange', emoji: '📊', basePrice: 2000, volatility: 0.06, activityDriven: true },
 ];
 
 export function getInvestmentBySymbol(symbol) {

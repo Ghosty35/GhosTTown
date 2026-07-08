@@ -173,22 +173,22 @@ export const botConfig = {
     baseBankCapacity: 10000000,
 
     // Daily reward amount.
-    dailyAmount: 1000,
+    dailyAmount: 40000,
 
     // Work command random payout range.
-    workMin: 100,
-    workMax: 2500,
+    workMin: 2000,
+    workMax: 10000,
 
     // Beg command random payout range.
-    begMin: 10,
-    begMax: 500,
+    begMin: 300,
+    begMax: 3000,
 
     // Passive coin earnings from chatting.
     // Members earn a small random amount just for sending messages,
     // with a per-user cooldown so it can't be spammed.
     chatEarnEnabled: true,
-    chatEarnMin: 1,
-    chatEarnMax: 5,
+    chatEarnMin: 10,
+    chatEarnMax: 50,
     chatEarnCooldown: 60000, // 1 minute between earning triggers per user
     chatEarnMinLength: 5, // ignore very short spam messages like "k" or "lol"
 
