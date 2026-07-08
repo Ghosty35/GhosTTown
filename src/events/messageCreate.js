@@ -18,6 +18,7 @@ import {
   isValidCountingMessage,
   recordCorrectCount,
 } from '../services/countingGameService.js';
+import { recordServerActivity } from '../services/investmentService.js';
 
 const MESSAGE_XP_RATE_LIMIT_ATTEMPTS = 12;
 const MESSAGE_XP_RATE_LIMIT_WINDOW_MS = 10000;
@@ -27,6 +28,9 @@ export default {
   async execute(message, client) {
     try {
       if (message.author.bot || !message.guild) return;
+
+      // Feed the Server Exchange (SRVX) — chat activity moves its price.
+      recordServerActivity(message.guild.id);
 
       logger.debug(`Message received from ${message.author.tag}: ${message.content}`);
 
