@@ -200,6 +200,59 @@ roleId: null,
         price: 20000,
         description: 'Unlocks access to the VIP area of the server, permanently.',
         type: 'access_role'
+    },
+
+    // -------------------------------------------------------------------
+    // NEW: Job licenses — one-time purchase required before applying for
+    // the matching job with /job apply. See config/jobs.js for pay rates.
+    // -------------------------------------------------------------------
+    {
+        id: 'license_bank_manager',
+        name: 'Bank Manager License',
+        emoji: '🏦',
+        price: 40000,
+        description: 'Required to apply for the Bank Manager job. Pays $60,000–$90,000/week.',
+        type: 'license'
+    },
+    {
+        id: 'license_car_mechanic',
+        name: 'Car Mechanic License',
+        emoji: '🔧',
+        price: 28000,
+        description: 'Required to apply for the Car Mechanic job. Pays $40,000–$65,000/week.',
+        type: 'license'
+    },
+    {
+        id: 'license_scammer',
+        name: 'Scammer License',
+        emoji: '🎭',
+        price: 32000,
+        description: 'Required to apply for the Scammer job. Pays $45,000–$80,000/week.',
+        type: 'license'
+    },
+    {
+        id: 'license_hacker',
+        name: 'Hacker License',
+        emoji: '💻',
+        price: 50000,
+        description: 'Required to apply for the Hacker job. Pays $70,000–$110,000/week.',
+        type: 'license'
+    },
+    {
+        id: 'license_delivery_driver',
+        name: 'Delivery Driver License',
+        emoji: '🚚',
+        price: 20000,
+        description: 'Required to apply for the Delivery Driver job. Pays $30,000–$50,000/week.',
+        type: 'license'
+    },
+    {
+        id: 'license_chef',
+        name: 'Chef License',
+        emoji: '👨‍🍳',
+        price: 24000,
+        description: 'Required to apply for the Chef job. Pays $35,000–$55,000/week.',
+        type: 'license'
     }
 ];
 
@@ -265,9 +318,10 @@ export function validatePurchase(itemId, userData) {
         }
     }
 
-    // NEW: color roles and access roles are one-time purchases, tracked
-    // the same way as tools/consumables — in userData.inventory.
-    if ((item.type === 'color_role' || item.type === 'access_role') && inventory[itemId]) {
+    // NEW: color roles, access roles, and job licenses are one-time
+    // purchases, tracked the same way as tools/consumables — in
+    // userData.inventory.
+    if ((item.type === 'color_role' || item.type === 'access_role' || item.type === 'license') && inventory[itemId]) {
         return {
             valid: false,
             reason: `You already own ${item.name}`
