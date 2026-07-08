@@ -4,9 +4,12 @@
 // - First use: sets up a 4-digit PIN (hashed, never stored in plain text).
 // - Every use after that: must enter the PIN to open the ATM.
 // - 3 wrong attempts in a row locks the account out for 60 seconds.
-// - Cash / Bank / Crypto tabs, switchable via a dropdown on the same message.
-// - Bank tab: Deposit / Withdraw buttons.
-// - Crypto tab: Buy / Sell buttons for the /invest market.
+// - Single screen showing Cash / Bank / Crypto balances at once.
+// - Deposit All / Withdraw All buttons move everything between cash and bank.
+// - Custom Amount button opens a modal with an amount field and a
+//   deposit/withdraw toggle (built with LabelBuilder, same pattern your
+//   economy_dashboard.js already uses for select-menu fields inside modals).
+// - Buy/Sell buttons trade shares on the /invest market.
 
 import crypto from 'crypto';
 import {
@@ -17,6 +20,7 @@ import {
     ActionRowBuilder,
     StringSelectMenuBuilder,
     StringSelectMenuOptionBuilder,
+    LabelBuilder,
     ButtonBuilder,
     ButtonStyle,
     EmbedBuilder,
@@ -189,105 +193,48 @@ async function showLoginModal(interaction, client, guildId, userId) {
 }
 
 // ---------------------------------------------------------------------
-// MAIN DASHBOARD — Cash / Bank / Crypto tabs
+// MAIN DASHBOARD — Cash, Bank, and Crypto shown together on one screen
 // ---------------------------------------------------------------------
 async function openAtmDashboard(rootInteraction, client, guildId, userId, welcomeMessage) {
-    let currentTab = 'cash';
-
     const buildEmbed = async () => {
         const userData = await getEconomyData(client, guildId, userId);
         const maxBank = getMaxBankCapacity(userData);
+        const market = await getMarket(client, guildId);
+        const portfolio = userData.portfolio || {};
+        const holdings = Object.entries(portfolio).filter(([, pos]) => pos.shares > 0);
+
+        let cryptoValue = 0;
+        for (const [symbol, pos] of holdings) {
+            const price = market[symbol]?.price || 0;
+            cryptoValue += pos.shares * price;
+        }
 
         const embed = new EmbedBuilder()
             .setTitle('🏧 Ghost Loans & Savings — ATM')
+            .setDescription('Your account at a glance. Use the buttons below to manage your money.')
             .setColor(getColor('economy'))
-            .setFooter({ text: 'Session closes after 3 minutes of inactivity' });
-
-        if (currentTab === 'cash') {
-            embed.setDescription(
-                '**💵 Cash on Hand**\n\nThe money in your wallet — ready to spend or bet, but **not** protected from `/rob`.'
-            );
-            embed.addFields({ name: 'Balance', value: `$${(userData.wallet || 0).toLocaleString()}`, inline: true });
-        } else if (currentTab === 'bank') {
-            embed.setDescription(
-                '**🏦 Ghost Savings and Loans Account**\n\nMoney here is safe from `/rob`. Use the buttons below to move money in or out.'
-            );
-            embed.addFields({
-                name: 'Balance',
-                value: `$${(userData.bank || 0).toLocaleString()} / $${maxBank.toLocaleString()}`,
-                inline: true,
-            });
-        } else if (currentTab === 'crypto') {
-            const market = await getMarket(client, guildId);
-            const portfolio = userData.portfolio || {};
-            const holdings = Object.entries(portfolio).filter(([, pos]) => pos.shares > 0);
-
-            let totalValue = 0;
-            const lines = holdings.map(([symbol, pos]) => {
-                const asset = getInvestmentBySymbol(symbol);
-                const price = market[symbol]?.price || 0;
-                const value = pos.shares * price;
-                totalValue += value;
-                return `${asset?.emoji || '•'} **${symbol}** — ${pos.shares} shares ($${value.toLocaleString()})`;
-            });
-
-            embed.setDescription(
-                `**📈 Crypto & Investments**\n\nYour trading portfolio across the GhostCoin market.\n\n${
-                    lines.length ? lines.join('\n') : '*No holdings yet — use Buy below to get started.*'
-                }`
-            );
-            embed.addFields({ name: 'Total Portfolio Value', value: `$${totalValue.toLocaleString()}`, inline: true });
-        }
+            .addFields(
+                { name: '💵 Cash', value: `$${(userData.wallet || 0).toLocaleString()}`, inline: true },
+                { name: '🏦 Bank', value: `$${(userData.bank || 0).toLocaleString()} / $${maxBank.toLocaleString()}`, inline: true },
+                { name: '📈 Crypto', value: `$${cryptoValue.toLocaleString()} (${holdings.length} holding${holdings.length === 1 ? '' : 's'})`, inline: true },
+                { name: '💰 Net Worth', value: `$${((userData.wallet || 0) + (userData.bank || 0) + cryptoValue).toLocaleString()}`, inline: false }
+            )
+            .setFooter({ text: 'Bank balance is protected from /rob • Session closes after 3 minutes of inactivity' });
 
         return embed;
     };
 
-    const buildTabRow = () =>
+    const buildComponents = () => [
         new ActionRowBuilder().addComponents(
-            new StringSelectMenuBuilder()
-                .setCustomId('atm_tab_select')
-                .setPlaceholder('Choose a tab')
-                .addOptions(
-                    new StringSelectMenuOptionBuilder()
-                        .setLabel('Cash')
-                        .setValue('cash')
-                        .setEmoji('💵')
-                        .setDefault(currentTab === 'cash'),
-                    new StringSelectMenuOptionBuilder()
-                        .setLabel('Bank')
-                        .setValue('bank')
-                        .setEmoji('🏦')
-                        .setDefault(currentTab === 'bank'),
-                    new StringSelectMenuOptionBuilder()
-                        .setLabel('Crypto')
-                        .setValue('crypto')
-                        .setEmoji('📈')
-                        .setDefault(currentTab === 'crypto')
-                )
-        );
-
-    const buildActionRow = () => {
-        if (currentTab === 'bank') {
-            return new ActionRowBuilder().addComponents(
-                new ButtonBuilder().setCustomId('atm_deposit').setLabel('Deposit').setStyle(ButtonStyle.Success).setEmoji('⬆️'),
-                new ButtonBuilder().setCustomId('atm_withdraw').setLabel('Withdraw').setStyle(ButtonStyle.Danger).setEmoji('⬇️')
-            );
-        }
-        if (currentTab === 'crypto') {
-            return new ActionRowBuilder().addComponents(
-                new ButtonBuilder().setCustomId('atm_buy_crypto').setLabel('Buy').setStyle(ButtonStyle.Success).setEmoji('📈'),
-                new ButtonBuilder().setCustomId('atm_sell_crypto').setLabel('Sell').setStyle(ButtonStyle.Danger).setEmoji('📉')
-            );
-        }
-        return null;
-    };
-
-    const buildComponents = () => {
-        const rows = [buildTabRow()];
-        const actionRow = buildActionRow();
-        if (actionRow) rows.push(actionRow);
-        return rows;
-    };
+            new ButtonBuilder().setCustomId('atm_deposit_all').setLabel('Deposit All').setStyle(ButtonStyle.Success).setEmoji('⬆️'),
+            new ButtonBuilder().setCustomId('atm_withdraw_all').setLabel('Withdraw All').setStyle(ButtonStyle.Danger).setEmoji('⬇️'),
+            new ButtonBuilder().setCustomId('atm_custom_amount').setLabel('Custom Amount').setStyle(ButtonStyle.Primary).setEmoji('✏️')
+        ),
+        new ActionRowBuilder().addComponents(
+            new ButtonBuilder().setCustomId('atm_buy_crypto').setLabel('Buy Crypto').setStyle(ButtonStyle.Secondary).setEmoji('📈'),
+            new ButtonBuilder().setCustomId('atm_sell_crypto').setLabel('Sell Crypto').setStyle(ButtonStyle.Secondary).setEmoji('📉')
+        ),
+    ];
 
     await rootInteraction.reply({
         content: welcomeMessage || undefined,
@@ -305,14 +252,20 @@ async function openAtmDashboard(rootInteraction, client, guildId, userId, welcom
 
     collector.on('collect', async (i) => {
         try {
-            if (i.customId === 'atm_tab_select') {
-                currentTab = i.values[0];
+            if (i.customId === 'atm_deposit_all') {
+                await handleDepositAll(client, guildId, userId);
                 await i.update({ embeds: [await buildEmbed()], components: buildComponents() });
                 return;
             }
 
-            if (i.customId === 'atm_deposit' || i.customId === 'atm_withdraw') {
-                await handleBankAction(i, client, guildId, userId, i.customId === 'atm_deposit' ? 'deposit' : 'withdraw');
+            if (i.customId === 'atm_withdraw_all') {
+                await handleWithdrawAll(client, guildId, userId);
+                await i.update({ embeds: [await buildEmbed()], components: buildComponents() });
+                return;
+            }
+
+            if (i.customId === 'atm_custom_amount') {
+                await handleCustomAmount(i, client, guildId, userId);
                 await InteractionHelper.safeEditReply(rootInteraction, {
                     embeds: [await buildEmbed()],
                     components: buildComponents(),
@@ -341,44 +294,84 @@ async function openAtmDashboard(rootInteraction, client, guildId, userId, welcom
 }
 
 // ---------------------------------------------------------------------
-// BANK TAB ACTIONS
+// DEPOSIT ALL / WITHDRAW ALL — instant, no modal needed
 // ---------------------------------------------------------------------
-async function handleBankAction(i, client, guildId, userId, action) {
-    const modal = new ModalBuilder()
-        .setCustomId(`atm_${action}_modal`)
-        .setTitle(action === 'deposit' ? 'Deposit to Ghost Savings and Loans' : 'Withdraw from Ghost Savings and Loans');
+async function handleDepositAll(client, guildId, userId) {
+    const userData = await getEconomyData(client, guildId, userId);
+    const maxBank = getMaxBankCapacity(userData);
+    const space = maxBank - userData.bank;
+
+    const amount = Math.max(0, Math.min(userData.wallet, space));
+    if (amount <= 0) return;
+
+    userData.wallet -= amount;
+    userData.bank += amount;
+    await setEconomyData(client, guildId, userId, userData);
+}
+
+async function handleWithdrawAll(client, guildId, userId) {
+    const userData = await getEconomyData(client, guildId, userId);
+    const amount = userData.bank;
+    if (amount <= 0) return;
+
+    userData.bank -= amount;
+    userData.wallet += amount;
+    await setEconomyData(client, guildId, userId, userData);
+}
+
+// ---------------------------------------------------------------------
+// CUSTOM AMOUNT — modal with amount field + deposit/withdraw toggle
+// ---------------------------------------------------------------------
+async function handleCustomAmount(i, client, guildId, userId) {
+    const modal = new ModalBuilder().setCustomId('atm_custom_amount_modal').setTitle('Custom Transaction');
+
+    const directionSelect = new StringSelectMenuBuilder()
+        .setCustomId('direction')
+        .setMinValues(1)
+        .setMaxValues(1)
+        .addOptions(
+            new StringSelectMenuOptionBuilder().setLabel('Deposit (Cash → Bank)').setValue('deposit').setEmoji('⬆️'),
+            new StringSelectMenuOptionBuilder().setLabel('Withdraw (Bank → Cash)').setValue('withdraw').setEmoji('⬇️')
+        );
+
+    const directionLabel = new LabelBuilder()
+        .setLabel('Direction')
+        .setDescription('Choose whether to deposit or withdraw')
+        .setStringSelectMenuComponent(directionSelect);
 
     const amountInput = new TextInputBuilder()
         .setCustomId('amount')
-        .setLabel(`Amount to ${action} (or "all")`)
+        .setLabel('Amount')
         .setStyle(TextInputStyle.Short)
         .setPlaceholder('1000')
         .setRequired(true);
 
+    modal.addLabelComponents(directionLabel);
     modal.addComponents(new ActionRowBuilder().addComponents(amountInput));
 
     await i.showModal(modal);
 
     const submitted = await i
-        .awaitModalSubmit({ filter: (m) => m.customId === `atm_${action}_modal` && m.user.id === userId, time: 60000 })
+        .awaitModalSubmit({ filter: (m) => m.customId === 'atm_custom_amount_modal' && m.user.id === userId, time: 60000 })
         .catch(() => null);
 
     if (!submitted) return;
 
-    const raw = submitted.fields.getTextInputValue('amount').trim();
+    const direction = submitted.fields.getField('direction').values[0];
+    const rawAmount = submitted.fields.getTextInputValue('amount').trim();
     const userData = await getEconomyData(client, guildId, userId);
     const maxBank = getMaxBankCapacity(userData);
 
-    if (action === 'deposit') {
-        let amount = raw.toLowerCase() === 'all' ? userData.wallet : parseInt(raw, 10);
+    let amount = parseInt(rawAmount, 10);
+    if (isNaN(amount) || amount <= 0) {
+        await replyUserError(submitted, { type: ErrorTypes.VALIDATION, message: 'Enter a valid positive whole number.' });
+        return;
+    }
 
-        if (isNaN(amount) || amount <= 0) {
-            await replyUserError(submitted, { type: ErrorTypes.VALIDATION, message: 'Enter a valid positive number or "all".' });
-            return;
-        }
+    if (direction === 'deposit') {
         if (amount > userData.wallet) amount = userData.wallet;
-
         const space = maxBank - userData.bank;
+
         if (space <= 0) {
             await replyUserError(submitted, {
                 type: ErrorTypes.VALIDATION,
@@ -401,12 +394,6 @@ async function handleBankAction(i, client, guildId, userId, action) {
             flags: MessageFlags.Ephemeral,
         });
     } else {
-        let amount = raw.toLowerCase() === 'all' ? userData.bank : parseInt(raw, 10);
-
-        if (isNaN(amount) || amount <= 0) {
-            await replyUserError(submitted, { type: ErrorTypes.VALIDATION, message: 'Enter a valid positive number or "all".' });
-            return;
-        }
         if (amount > userData.bank) amount = userData.bank;
         if (amount <= 0) {
             await replyUserError(submitted, { type: ErrorTypes.VALIDATION, message: 'Your Ghost Savings and Loans account is empty.' });
@@ -425,7 +412,7 @@ async function handleBankAction(i, client, guildId, userId, action) {
 }
 
 // ---------------------------------------------------------------------
-// CRYPTO TAB ACTIONS
+// CRYPTO ACTIONS
 // ---------------------------------------------------------------------
 async function handleCryptoAction(i, client, guildId, userId, action) {
     const modal = new ModalBuilder()
