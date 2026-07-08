@@ -160,8 +160,8 @@ export default {
         // 6) RULES
         // ---------------------------------------------------------------
         const dashboardChannelText = dashboardChannel
-            ? `Head to ${dashboardChannel.toString()} and run \`/stats dashboard\` once.`
-            : 'Run `/stats dashboard` in this server\'s designated Dashboard channel.';
+            ? `Head to ${dashboardChannel.toString()} and run \`/my-stats dashboard\` once.`
+            : 'Run `/my-stats dashboard` in this server\'s designated Dashboard channel.';
 
         const progressEmbed = createEmbed({
             title: '📊👻 Track Your Progress',
@@ -169,7 +169,7 @@ export default {
             color: 'economy',
             fields: [
                 {
-                    name: '📊 /stats dashboard — Your Live Stats Card',
+                    name: '📊 /my-stats dashboard — Your Live Stats Card',
                     value:
                         `${dashboardChannelText}\n\n` +
                         'It posts a personal card showing your 💰 balances, 💼 job, 🎮 today\'s game results, and every ⏱️ cooldown at a glance.\n\n' +
@@ -177,17 +177,17 @@ export default {
                     inline: false,
                 },
                 {
-                    name: '📈 /stats earnings',
+                    name: '📈 /my-stats earnings',
                     value: 'Full breakdown of every income source — hourly, daily, and weekly rates for jobs, plus every command\'s payout range.',
                     inline: false,
                 },
                 {
-                    name: '⏱️ /stats cooldowns',
+                    name: '⏱️ /my-stats cooldowns',
                     value: 'A quick one-off cooldown check from anywhere, if you don\'t want to wait for your dashboard to refresh.',
                     inline: false,
                 },
                 {
-                    name: '🎮 /stats games',
+                    name: '🎮 /my-stats games',
                     value: 'Your win/loss total for today across slots, blackjack, gamble, coinflip, and rob.',
                     inline: false,
                 },
@@ -206,7 +206,7 @@ export default {
                         '🏧 Use `/atm` to move spare cash into 🏦 Ghost Savings and Loans\n\n' +
                         '🔑 Set a PIN you\'ll actually remember\n\n' +
                         '💼 Get a job for reliable weekly income\n\n' +
-                        '📊 Set up `/stats dashboard` once — don\'t spam it, you only get one live card at a time\n\n' +
+                        '📊 Set up `/my-stats dashboard` once — don\'t spam it, you only get one live card at a time\n\n' +
                         '🐛 Report bugs to staff instead of using them',
                     inline: false,
                 },
