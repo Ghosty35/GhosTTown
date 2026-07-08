@@ -428,6 +428,49 @@ export default {
             error: replyError,
             traceId: interactionTraceContext.traceId
           });
+
+          // === Reaction Role Button Handler ===
+if (interaction.isButton() && interaction.customId.startsWith('role:')) {
+    const roleName = interaction.customId.split(':')[1];
+    const member = interaction.member;
+
+    // Map button ID to actual role ID (customize this!)
+    const roleMap = {
+        'announcements': 'ROLE_ID_HERE',   // Replace with real role IDs
+        'games': 'ROLE_ID_HERE',
+        'memes': 'ROLE_ID_HERE',
+        'roast-pit': 'ROLE_ID_HERE',
+    };
+
+    const roleId = roleMap[roleName];
+    if (!roleId) return;
+
+    const role = interaction.guild.roles.cache.get(roleId);
+    if (!role) {
+        return interaction.reply({ content: 'Role not found.', ephemeral: true });
+    }
+
+    try {
+        if (member.roles.cache.has(roleId)) {
+            await member.roles.remove(roleId);
+            await interaction.reply({ 
+                content: `❌ Removed **${role.name}** role.`, 
+                ephemeral: true 
+            });
+        } else {
+            await member.roles.add(roleId);
+            await interaction.reply({ 
+                content: `✅ Added **${role.name}** role.`, 
+                ephemeral: true 
+            });
+        }
+    } catch (error) {
+        await interaction.reply({ 
+            content: 'Failed to update role. Make sure the bot has permission.', 
+            ephemeral: true 
+        });
+    }
+}
         }
       }
     });
