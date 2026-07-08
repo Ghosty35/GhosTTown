@@ -52,6 +52,8 @@ export default {
                             'This is now the official **Roast Channel**. 👻\n\n' +
                                 'Say anything in here and I *will* have something to say back. ' +
                                 'Your balance, your job, your gambling history — nothing is off the table.\n\n' +
+                                '💡 I also answer real questions — ask me the **weather** ("weather in Tokyo"), ' +
+                                'the **time**, **math**, or anything else. You\'ll get a real answer... and a roast on the side.\n\n' +
                                 "Talk at your own risk. Don't cry to the mods. 🔥"
                         ),
                     ],
