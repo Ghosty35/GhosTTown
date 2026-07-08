@@ -3,6 +3,7 @@ import { successEmbed, warningEmbed, buildUserErrorEmbed } from '../../utils/emb
 import { getEconomyData, setEconomyData } from '../../utils/economy.js';
 import { withErrorHandling, createError, ErrorTypes } from '../../utils/errorHandler.js';
 import { InteractionHelper } from '../../utils/interactionHelper.js';
+import { logGameResult } from '../../services/gameLogService.js';
 
 const ROB_COOLDOWN = 4 * 60 * 60 * 1000;
 const BASE_ROB_SUCCESS_CHANCE = 0.05;
@@ -101,12 +102,14 @@ export default {
 
             const isSuccessful = Math.random() < BASE_ROB_SUCCESS_CHANCE;
             let resultEmbed;
+            let robberNet = 0;
 
             if (isSuccessful) {
                 const amountStolen = Math.floor(victimData.wallet * ROB_PERCENTAGE);
 
                 robberData.wallet = (robberData.wallet || 0) + amountStolen;
                 victimData.wallet = (victimData.wallet || 0) - amountStolen;
+                robberNet = amountStolen;
 
                 resultEmbed = successEmbed(
                     'Robbery Successful',
@@ -120,6 +123,7 @@ export default {
                 } else {
                     robberData.wallet = (robberData.wallet || 0) - fineAmount;
                 }
+                robberNet = -fineAmount;
 
                 resultEmbed = buildUserErrorEmbed(
                     'unknown',
@@ -132,6 +136,7 @@ export default {
 
             await setEconomyData(client, guildId, robberId, robberData);
             await setEconomyData(client, guildId, victimUser.id, victimData);
+            await logGameResult(client, guildId, robberId, 'rob', robberNet);
 
             resultEmbed
                 .addFields(

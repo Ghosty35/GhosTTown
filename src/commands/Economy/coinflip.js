@@ -4,6 +4,7 @@ import { getEconomyData, setEconomyData } from '../../utils/economy.js';
 import { withErrorHandling, createError, ErrorTypes } from '../../utils/errorHandler.js';
 import { InteractionHelper } from '../../utils/interactionHelper.js';
 import { logger } from '../../utils/logger.js';
+import { logGameResult } from '../../services/gameLogService.js';
 
 const CHALLENGE_TIMEOUT_MS = 60000;
 
@@ -127,6 +128,8 @@ export default {
 
                 await setEconomyData(client, guildId, winner.id, winnerData);
                 await setEconomyData(client, guildId, loser.id, loserData);
+                await logGameResult(client, guildId, winner.id, 'coinflip', amount);
+                await logGameResult(client, guildId, loser.id, 'coinflip', -amount);
 
                 const resultEmbed = successEmbed(
                     '🪙 Coinflip Result',

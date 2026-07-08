@@ -3,6 +3,7 @@ import { successEmbed, warningEmbed } from '../../utils/embeds.js';
 import { getEconomyData, setEconomyData } from '../../utils/economy.js';
 import { withErrorHandling, createError, ErrorTypes } from '../../utils/errorHandler.js';
 import { InteractionHelper } from '../../utils/interactionHelper.js';
+import { logGameResult } from '../../services/gameLogService.js';
 
 const SLOTS_COOLDOWN = 3 * 60 * 1000;
 
@@ -113,6 +114,7 @@ export default {
         userData.lastSlots = now;
 
         await setEconomyData(client, guildId, userId, userData);
+        await logGameResult(client, guildId, userId, 'slots', cashChange);
 
         resultEmbed.addFields({
             name: 'New Cash Balance',

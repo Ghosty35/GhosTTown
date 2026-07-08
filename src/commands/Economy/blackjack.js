@@ -4,6 +4,7 @@ import { getEconomyData, setEconomyData } from '../../utils/economy.js';
 import { withErrorHandling, createError, ErrorTypes } from '../../utils/errorHandler.js';
 import { InteractionHelper } from '../../utils/interactionHelper.js';
 import { logger } from '../../utils/logger.js';
+import { logGameResult } from '../../services/gameLogService.js';
 
 const TURN_TIMEOUT_MS = 45000;
 const SUITS = ['♠️', '♥️', '♦️', '♣️'];
@@ -217,6 +218,7 @@ async function resolveGame(interaction, client, guildId, userId, betAmount, play
 
     userData.wallet += payout;
     await setEconomyData(client, guildId, userId, userData);
+    await logGameResult(client, guildId, userId, 'blackjack', payout - betAmount);
 
     resultEmbed.addFields({ name: 'New Cash Balance', value: `$${userData.wallet.toLocaleString()}`, inline: true });
 

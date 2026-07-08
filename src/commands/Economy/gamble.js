@@ -3,6 +3,7 @@ import { createEmbed, successEmbed, infoEmbed, warningEmbed } from '../../utils/
 import { getEconomyData, setEconomyData } from '../../utils/economy.js';
 import { withErrorHandling, createError, ErrorTypes } from '../../utils/errorHandler.js';
 import { InteractionHelper } from '../../utils/interactionHelper.js';
+import { logGameResult } from '../../services/gameLogService.js';
 
 const BASE_WIN_CHANCE = 0.5;
 const CLOVER_WIN_BONUS = 0.2;
@@ -102,6 +103,7 @@ cashChange = -betAmount;
 userData.lastGamble = now;
 
             await setEconomyData(client, guildId, userId, userData);
+            await logGameResult(client, guildId, userId, 'gamble', cashChange);
 
             const newCash = userData.wallet;
 
