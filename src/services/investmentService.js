@@ -33,14 +33,21 @@ export function recordServerActivity(guildId) {
 // First matching tier wins. Tune these to your server's size: a small
 // server might lower every threshold, a huge one might raise them.
 const ACTIVITY_TIERS = [
-    { minMessages: 200, change: +0.06 },  // buzzing → +6%
-    { minMessages: 100, change: +0.04 },
-    { minMessages: 50,  change: +0.025 },
-    { minMessages: 20,  change: +0.01 },
-    { minMessages: 5,   change: 0 },      // quiet but alive → flat
+    { minMessages: 200, change: +0.08 },  // buzzing → +8%
+    { minMessages: 100, change: +0.05 },
+    { minMessages: 50,  change: +0.03 },
+    { minMessages: 20,  change: +0.015 },
+    { minMessages: 5,   change: +0.005 }, // quiet but alive → slight climb
     { minMessages: 1,   change: -0.015 },
-    { minMessages: 0,   change: -0.035 }, // dead silence → -3.5%
+    { minMessages: 0,   change: -0.04 },  // dead silence → -4%
 ];
+
+// Slight upward bias applied to every regular asset each tick (+0.8%).
+// This makes long-term holding profitable on average (~+3.2%/hour if
+// prices tick every 15 min), giving players a real reason to invest
+// instead of the market being a pure coin flip. Raise it for a more
+// generous market, set to 0 for the old neutral random walk.
+const MARKET_DRIFT = 0.008;
 
 function getActivityChange(messageCount) {
     const tier = ACTIVITY_TIERS.find((t) => messageCount >= t.minMessages);
@@ -108,7 +115,7 @@ export async function updateAllMarkets(client) {
 
                 const change = asset.activityDriven
                     ? getActivityChange(messageCount)
-                    : (Math.random() * 2 - 1) * asset.volatility;
+                    : MARKET_DRIFT + (Math.random() * 2 - 1) * asset.volatility;
 
                 const newPrice = Math.max(1, Math.round(entry.price * (1 + change)));
 
