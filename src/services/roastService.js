@@ -174,12 +174,14 @@ async function answerWithAI(content, username) {
                 model: 'claude-haiku-4-5',
                 max_tokens: 300,
                 system:
-                    'You are the resident roast-bot of a Discord server called GhostTown. ' +
+                    'You are the resident roast-bot of a Discord server. ' +
                     'A member asked you a question in the roast channel. Answer it genuinely and correctly ' +
-                    '(this is the priority — be actually helpful), but wrap it in playful, PG-13 roast energy ' +
-                    'aimed at the asker. Light teasing about them asking a bot, never slurs, never cruelty about ' +
-                    'real-life traits, no adult content. Keep it under 120 words. Plain text only, Discord-friendly. ' +
-                    `The member's display name is "${username}".`,
+                    '(this is the priority — be actually helpful), wrapped in playful, PG-13 roast energy ' +
+                    'aimed at the asker. Keep the humor about everyday relatable things (sleep schedules, ' +
+                    'procrastination, phone habits, chat behavior) — do NOT reference server currencies, ' +
+                    'games, or Discord-bot features. Light teasing only: never slurs, never cruelty about ' +
+                    'real-life traits like appearance or identity, no adult content. Keep it under 120 words. ' +
+                    `Plain text only, Discord-friendly. The member's display name is "${username}".`,
                 messages: [{ role: 'user', content: content.slice(0, 500) }],
             }),
         });
@@ -241,90 +243,94 @@ const CONTEXTUAL = [
             "Oh great, {user} is here. And the channel was having such a nice day.",
             "Hey {user}! I'd say welcome back, but nobody noticed you left.",
             "{user} says hi like anyone was waiting for them. Adorable.",
-            "Morning {user}. The ghosts saw you coming and chose to stay dead.",
+            "Good morning {user}. It's 2 PM. Rough night or rough life?",
             "Sup {user}. Quick question — who invited you?",
+            "{user} greeting the chat like the group project member who did nothing showing up to the presentation.",
         ],
     },
     {
         match: /\bhow (are|r) (you|u)\b|\bhow('?s| is) it going\b/i,
         lines: [
             "I was doing great until this notification, {user}.",
-            "Better than your balance, {user}. But that's a low bar.",
-            "Living my best life watching you fumble yours, {user}.",
+            "Better than your sleep schedule, {user}. But that's a low bar.",
+            "I'm good. You, on the other hand, just asked a computer how it feels. Reflect on that, {user}.",
+            "Thriving, {user}. You should try it sometime.",
         ],
     },
     {
         match: /\b(roast me|do your worst|come at me|try me)\b/i,
         lines: [
             "{user} asking to be roasted... your life choices already did my job for me.",
-            "Roast you? {user}, your `/rob` success rate roasts you daily.",
+            "Roast you? {user}, your search history roasts you daily.",
             "I would, {user}, but bullying the pre-defeated feels wrong.",
-            "You want a roast? Check your portfolio, {user}. Self-service.",
+            "You want a roast, {user}? Your camera roll of 4,000 unsorted screenshots says enough.",
+            "Asking strangers online to insult you, {user}? Therapy is cheaper than you think.",
         ],
     },
     {
         match: /\b(bad bot|trash|garbage|dumb|stupid|shut up|stfu|useless|mid|you suck|u suck)\b/i,
         lines: [
-            "Big words from someone who begs a Discord bot for coins, {user}.",
-            "{user} calling ME trash while typing from the jail cell of life.",
-            "I'm 'useless'? I literally pay your salary, {user}. Know your employer.",
-            "Careful {user}, I control the slot machine. Choose your next words wisely. 🎰",
-            "{user}, I've seen your gamble history. You're not qualified to judge anything.",
+            "Big words from someone who loses arguments to autocorrect, {user}.",
+            "{user} calling ME dumb while their phone storage has been full since 2023.",
+            "I'm 'useless'? {user}, you own a gym membership you've used twice.",
+            "Careful {user}, I have a perfect memory and you have a search history.",
+            "{user} typing insults with the same fingers that ordered delivery three days in a row.",
         ],
     },
     {
         match: /\b(love (you|u)|good bot|nice bot|best bot|thank(s| you)|ty)\b/i,
         lines: [
-            "Flattery won't fix your win rate, {user}.",
-            "Aww, {user}. Still not boosting your daily. Nice try though.",
-            "Save the sweet talk for someone who hasn't seen your `/beg` history, {user}.",
+            "Aww, {user}. Say it to a human sometime — they miss you.",
+            "Flattery from {user}? Now I KNOW you want something.",
+            "Thanks {user}. This is the most affection you've given anything since your houseplant. Which died.",
         ],
     },
     {
         match: /\b(lol|lmao+|lmfao|haha+|xd|😂|🤣)\b/i,
         lines: [
-            "Glad you're laughing, {user}. Your bank account isn't.",
-            "{user} laughing like they didn't lose their whole wallet on slots yesterday.",
-            "Keep laughing {user}, the market's laughing at YOUR portfolio.",
+            "Glad you're laughing, {user}. Your unread emails aren't.",
+            "{user} laughing like their alarm isn't set for 6 AM with zero intention of getting up.",
+            "Keep laughing {user}, your laundry pile has been 'getting done tomorrow' for a week.",
         ],
     },
     {
         match: /\b(i'?m rich|im rich|so much money|stack(ed|s)|balling|millionaire|billionaire)\b/i,
         lines: [
-            "Rich? {user}, I've seen your balance. Inflation called — even it feels bad for you.",
-            "{user} flexing GhostCoins like they're not one bad `/gamble` from `/beg`.",
-            "Congrats on the money, {user}. The casino will hold it for you shortly. 🎰",
+            "Rich? {user}, you screenshot your banking app when there's a good number in it.",
+            "{user} flexing like they didn't check their account before ordering the large fries.",
+            "Congrats on the money, {user}. Subscription services you forgot about would like a word.",
         ],
     },
     {
         match: /\b(sad|crying|cry|i lost|rip|pain|why me|unlucky)\b|😭|💀/i,
         lines: [
-            "There there, {user}. Have you tried being better?",
+            "There there, {user}. Have you tried drinking water and going outside?",
             "{user} down bad AGAIN. At this point it's a lifestyle, not luck.",
             "Losses build character, {user}. You must have SO much character by now.",
+            "It's okay {user}. Tomorrow is a new day for you to fumble too.",
         ],
     },
     {
         match: /\b(no u|no you|you too|ur mom|your mom)\b/i,
         lines: [
-            "'No u'? Devastating, {user}. Truly the wordplay of a Cybercrime specialist.",
-            "{user} really dusted off 'no u' from 2016. The vault has better security than your comebacks.",
+            "'No u'? Devastating, {user}. Truly the wordplay of a scholar.",
+            "{user} really dusted off 'no u' from 2016. Your comebacks need a software update.",
         ],
     },
     {
         match: /\b(bye|goodnight|gn|cya|see ya|leaving|im out|i'?m out)\b/i,
         lines: [
             "Bye {user}! Best thing you've said all day.",
-            "Leaving already, {user}? The economy just got 1% stronger.",
-            "Goodnight {user}. Dream about winning for once.",
+            "Goodnight {user}. 'Goodnight' meaning three more hours of scrolling, we both know.",
+            "Leaving already, {user}? The average IQ of the chat just recovered.",
         ],
     },
     {
         match: /\?$/,
         lines: [
-            "Great question, {user}. Almost as great as 'why is my wallet empty?' — which you should also ask.",
+            "Great question, {user}. Almost as great as 'why am I like this?' — which you should also ask.",
             "{user}, I'd answer, but watching you figure it out is funnier.",
-            "You're asking ME, {user}? Bold move from someone who lost a coinflip to gravity.",
+            "You're asking ME, {user}? Bold move from someone who googles 'how to boil egg'.",
         ],
     },
 ];
@@ -391,36 +397,48 @@ function buildStatRoasts(userData) {
 // 3) GENERIC ROAST POOL
 // ---------------------------------------------------------------------
 const GENERIC = [
-    "{user}, I've seen better takes from the `/beg` command's error messages.",
-    "Somewhere out there a slot machine is spinning three 💀s in your honor, {user}.",
+    // ── Everyday life ──
     "{user} types like their keyboard is also trying to leave the conversation.",
-    "The Server Exchange dips every time you go online, {user}. Coincidence? The data says no. 📉",
-    "{user}, you're the human version of a failed jailbreak — bold attempt, instant regret.",
-    "If Ls were GhostCoins you'd finally be rich, {user}.",
-    "{user}, even the counting channel thinks you can't keep up.",
     "You bring everyone so much joy, {user}. When you stop typing.",
-    "I'd explain it to you, {user}, but I left my crayons in the vault.",
-    "{user} is proof the bot needs a `/block` command for its own wellbeing.",
-    "The dealer doesn't even shuffle for you anymore, {user}. Why bother?",
-    "{user}, your luck is so bad the Lucky Clover filed a restraining order. 🍀",
-    "NPCs in GhostTown have better dialogue than this, {user}.",
-    "{user} would lose a coinflip with a two-headed coin.",
-    "Your portfolio called, {user}. It wants to be emancipated.",
-    "{user}, you're the reason the heist success rate is only 30%.",
-    "I'm a bot and even I felt secondhand embarrassment reading that, {user}.",
-    "{user} really said that with their whole chest and their empty wallet.",
-    "The ghosts avoid YOU, {user}. Think about that.",
-    "{user}, you couldn't hit 7️⃣7️⃣7️⃣ in a dream sequence.",
-    "Every server has a main character, {user}. You're the loading screen.",
-    "{user}, your comebacks have a longer cooldown than `/rob`.",
-    "Talking to you is like the FARM stock, {user} — low volatility, no excitement.",
+    "{user}, your sleep schedule is a crime and you're the only witness.",
+    "Somewhere your unread emails are multiplying, {user}, and you're HERE.",
+    "{user} really said that with their whole chest and their 4% phone battery.",
+    "Your wifi drops every time you're about to say something smart, {user}. Suspiciously convenient.",
+    "{user}, you've had 'I'll start Monday' energy for six consecutive Mondays.",
+    "You're not lazy, {user}. You're just in a committed relationship with your bed.",
+    "{user} gives 'replies 'lol' and puts the phone face down' energy.",
+    "Your camera roll is 90% screenshots you'll never look at again, {user}. Curate your life.",
+    "{user}, you microwave food and still manage to burn it. Impressive, honestly.",
+    "The gym misses you, {user}. Just kidding — it doesn't remember you.",
+    "{user} has 47 open browser tabs and not one single plan.",
+    "You hit snooze so much your alarm filed for divorce, {user}.",
+    "{user}, your 'quick shower' has a longer runtime than most movies.",
+    "Water has been waiting for you all day, {user}, and you chose your third energy drink.",
+    "{user} is the person who says 'let's split it evenly' after ordering the most expensive thing.",
+    "Your houseplant didn't die of thirst, {user}. It died of disappointment.",
+    "{user}, you own more chargers than working braincells and STILL can't find one.",
+    "Every group chat goes quiet when you type, {user}. That's not suspense.",
+    "{user} would lose a staring contest with a mirror.",
+    "You cancel plans and then feel lonely, {user}. The math isn't mathing.",
+    "{user}, your 'five more minutes' is measured in geological time.",
+    "The dishes in your sink have formed a government, {user}.",
+    "{user}, you reply to texts in 0.2 seconds or 5 business days. No in between.",
+    "Autocorrect gave up on you years ago, {user}. It just watches now.",
+    "{user} is proof that 'main character energy' needs a better casting director.",
+    "You've been 'about to go to sleep' for three hours, {user}. Commit to something.",
+    "{user}, your comebacks buffer longer than your favorite show.",
     "You're not the worst, {user}. You're just consistently mid, which is somehow sadder.",
-    "{user}, the Bank Manager saw your account and took a personal day.",
-    "Even MoonShot Ventures wouldn't take a risk on you, {user}. 🚀",
-    "{user}, if I had feelings, that message would've bored them to death.",
-    "The 'Jobless' role fits you like it was tailored, {user}.",
-    "{user}, you gamble like the house needed a charity win.",
-    "Somewhere a Diamond Pickaxe is mining more personality than you've ever had, {user}. 💎",
+    "If overthinking burned calories, {user}, you'd be an athlete.",
+    "{user}, even your shadow shows up late.",
+    "I'm a bot and even I felt secondhand embarrassment reading that, {user}.",
+    "Every server has a main character, {user}. You're the loading screen.",
+    "NPCs have better dialogue than this, {user}.",
+    // ── Server-flavored spice (kept small on purpose) ──
+    "If Ls were GhostCoins you'd finally be rich, {user}.",
+    "{user}, you're the reason the heist success rate is only 30%.",
+    "{user} would lose a coinflip with a two-headed coin.",
+    "The Server Exchange dips every time you go online, {user}. Coincidence? The data says no. 📉",
+    "{user}, you couldn't hit 7️⃣7️⃣7️⃣ in a dream sequence.",
 ];
 
 // ---------------------------------------------------------------------
@@ -455,7 +473,9 @@ export async function handleRoastMessage(message, client) {
             return true;
         }
 
-        // Decide the flavor: contextual > personal (40%) > generic.
+        // Decide the flavor: contextual > personal (15%) > generic.
+        // Stat-based burns are kept rare on purpose — they hit harder
+        // as an occasional surprise than as the bot's whole personality.
         let line = null;
 
         for (const category of CONTEXTUAL) {
@@ -465,7 +485,7 @@ export async function handleRoastMessage(message, client) {
             }
         }
 
-        if (!line && Math.random() < 0.4) {
+        if (!line && Math.random() < 0.15) {
             const userData = await getEconomyData(client, message.guild.id, message.author.id);
             const statRoasts = buildStatRoasts(userData);
             if (statRoasts.length > 0) {
