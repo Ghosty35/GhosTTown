@@ -41,12 +41,42 @@ export default {
         // 1) HEADER
         // ---------------------------------------------------------------
         const headerEmbed = createEmbed({
-            title: '📢👻 BOT UPDATE — Economy & Stock Market Overhaul',
+            title: '📢👻 BOT UPDATE — Economy Mega Boost & Stock Market Overhaul',
             description:
-                'Big drop today, ghosts! 🎉\n\n' +
-                'A brand-new **🏦 Stock Market Heist**, a stock powered by **your chat activity**, and a full **💹 market rebalance**.\n\n' +
-                'Get trading, get heisting — the market is watching. 👀',
+                'HUGE drop today, ghosts! 🎉\n\n' +
+                'A brand-new **🏦 Stock Market Heist**, a stock powered by **your chat activity**, ' +
+                'and a **💰 massive boost to EVERY way of earning** — work, jobs, casino, chatting, stocks, all of it.\n\n' +
+                'Get earning, get trading, get heisting — it has never paid better. 👀',
             color: 'economy',
+        });
+
+        // ---------------------------------------------------------------
+        // 1b) EARNINGS MEGA BOOST
+        // ---------------------------------------------------------------
+        const earningsEmbed = createEmbed({
+            title: '💰 EARNINGS MEGA BOOST',
+            description: 'Every income source just got a serious raise:',
+            color: 'economy',
+            fields: [
+                { name: '🛠️ /work', value: '$750–4k → **$2k–10k**', inline: true },
+                { name: '🎣 /fish', value: '$500–2k → **$1.5k–6k**', inline: true },
+                { name: '⛏️ /mine', value: '$600–2.2k → **$1.8k–6.5k**', inline: true },
+                { name: '🙏 /beg', value: '$100–1k → **$300–3k**', inline: true },
+                { name: '🎁 /daily', value: '$15k → **$40k**', inline: true },
+                { name: '🕵️ /crime', value: 'All payouts **×3** (up to $85k!)', inline: true },
+                { name: '💼 Jobs', value: 'All weekly pay **×3** — top jobs now pay up to **$330k/week**!', inline: true },
+                { name: '💬 Chatting', value: '$1–5 → **$10–50** per message', inline: true },
+                { name: '🦹 /rob', value: 'Success chance **5% → 25%**, steal **10%** of wallets', inline: true },
+                {
+                    name: '🎰 Casino got juicier too',
+                    value:
+                        '• Slots jackpot: 50x → **100x** your bet (all multipliers raised!)\n' +
+                        '• Blackjack: natural pays 2.5x → **3x**\n' +
+                        '• Gamble: win chance 50% → **55%**, payout 2x → **2.2x**',
+                    inline: false,
+                },
+            ],
+            footer: { text: '💸 Time to get rich, ghosts!' },
         });
 
         // ---------------------------------------------------------------
@@ -94,9 +124,9 @@ export default {
                 'SRVX **rises when the server is active** and **falls when chat goes quiet** — checked every 15 minutes.',
             color: 'economy',
             fields: [
-                { name: '🔥 Buzzing chat (200+ msgs)', value: '**+6%** per tick 📈', inline: true },
-                { name: '💬 Active chat (50–199 msgs)', value: '**+2.5% to +4%** per tick', inline: true },
-                { name: '💀 Dead chat (0 msgs)', value: '**−3.5%** per tick 📉', inline: true },
+                { name: '🔥 Buzzing chat (200+ msgs)', value: '**+8%** per tick 📈', inline: true },
+                { name: '💬 Active chat (50–199 msgs)', value: '**+3% to +5%** per tick', inline: true },
+                { name: '💀 Dead chat (0 msgs)', value: '**−4%** per tick 📉', inline: true },
                 {
                     name: '💡 The play',
                     value: 'Buy shares with `/invest buy`, then keep the conversation alive to pump your own bag. Your portfolio literally depends on the server staying active! 👻',
@@ -110,16 +140,16 @@ export default {
         // ---------------------------------------------------------------
         const pricesEmbed = createEmbed({
             title: '💹 Stock Price Rebalance',
-            description: 'All stocks got a big boost — same market feel, chunkier numbers.',
+            description: 'All stocks got a huge boost — and the market now has an **upward drift**, so holding shares is profitable on average. 📈',
             color: 'economy',
             fields: [
-                { name: '👻 Ghost Corp (GHST)', value: '$100 → **$450**', inline: true },
-                { name: '🏙️ Town Holdings (TOWN)', value: '$250 → **$1,200**', inline: true },
-                { name: '🚀 MoonShot (MOON)', value: '$40 → **$150**', inline: true },
-                { name: '🥇 Golden Reserve (GOLD)', value: '$500 → **$2,500**', inline: true },
-                { name: '🪙 CryptoCoin (CRYP)', value: '$20 → **$85**', inline: true },
-                { name: '🌾 Farmland (FARM)', value: '$80 → **$350**', inline: true },
-                { name: '📊 Server Exchange (SRVX)', value: 'NEW at **$1,000**', inline: true },
+                { name: '👻 Ghost Corp (GHST)', value: '$100 → **$900**', inline: true },
+                { name: '🏙️ Town Holdings (TOWN)', value: '$250 → **$2,500**', inline: true },
+                { name: '🚀 MoonShot (MOON)', value: '$40 → **$300**', inline: true },
+                { name: '🥇 Golden Reserve (GOLD)', value: '$500 → **$5,000**', inline: true },
+                { name: '🪙 CryptoCoin (CRYP)', value: '$20 → **$175**', inline: true },
+                { name: '🌾 Farmland (FARM)', value: '$80 → **$700**', inline: true },
+                { name: '📊 Server Exchange (SRVX)', value: 'NEW at **$2,000**', inline: true },
             ],
             footer: { text: '📈 Prices update every 15 minutes — check /invest market' },
         });
@@ -133,7 +163,7 @@ export default {
             fields: [
                 {
                     name: '🏦 Heist payouts',
-                    value: 'Tuned to the new market prices — roughly **$3.5k–$9k per heist**, split between partners.',
+                    value: 'Tuned to the new market prices — roughly **$7k–$18k per heist**, split between partners.',
                     inline: false,
                 },
                 {
@@ -147,7 +177,7 @@ export default {
 
         await targetChannel.send({
             content: pingRole ? pingRole.toString() : undefined,
-            embeds: [headerEmbed, heistEmbed, srvxEmbed, pricesEmbed, balanceEmbed],
+            embeds: [headerEmbed, earningsEmbed, heistEmbed, srvxEmbed, pricesEmbed, balanceEmbed],
         });
 
         await InteractionHelper.safeEditReply(interaction, {
