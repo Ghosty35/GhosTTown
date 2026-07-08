@@ -10,6 +10,11 @@
 // -----------------------------------------------------------------------
 const STORY_DURATION_MS = 7 * 24 * 60 * 60 * 1000; // 7 days per round
 
+// How long a member must wait after posting a word before posting another.
+// Any message they send in the story channel during this window gets
+// deleted automatically (handled in events/storyMessage.js).
+const WORD_COOLDOWN_MS = 60 * 1000; // 1 minute
+
 // Topics are used in order, then loop back to the start. An admin can
 // override the *next* round's topic with /story topic.
 const TOPIC_POOL = [
@@ -42,6 +47,7 @@ function freshStory(topicIndex = 0, overrideTopic = null) {
     startedAt: Date.now(),
     topicIndex: topicIndex % TOPIC_POOL.length,
     nextTopicOverride: null,
+    userCooldowns: {}, // { userId: timestamp of their last accepted word }
   };
 }
 
@@ -77,9 +83,21 @@ export function validateWord(word) {
 }
 
 /**
+ * Returns how many milliseconds remain before this user can post again,
+ * or 0 if they're free to go. Lets the message handler decide whether to
+ * delete a message BEFORE even checking if it's a valid word.
+ */
+export function getUserCooldownRemaining(story, userId) {
+  const lastPosted = story.userCooldowns?.[userId];
+  if (!lastPosted) return 0;
+  const remaining = lastPosted + WORD_COOLDOWN_MS - Date.now();
+  return remaining > 0 ? remaining : 0;
+}
+
+/**
  * Attempts to add a word to the current story.
  * Returns { success: true, story } or { success: false, reason }
- * reason is one of: 'INVALID_WORD', 'SAME_USER'
+ * reason is one of: 'INVALID_WORD', 'COOLDOWN'
  */
 export async function addWord(client, guildId, userId, username, rawWord) {
   const word = (rawWord || '').trim();
@@ -89,13 +107,15 @@ export async function addWord(client, guildId, userId, username, rawWord) {
   }
 
   const story = await getStory(client, guildId);
-  const lastEntry = story.words[story.words.length - 1];
+  story.userCooldowns = story.userCooldowns || {};
 
-  if (lastEntry && lastEntry.userId === userId) {
-    return { success: false, reason: 'SAME_USER' };
+  const remaining = getUserCooldownRemaining(story, userId);
+  if (remaining > 0) {
+    return { success: false, reason: 'COOLDOWN', remaining };
   }
 
   story.words.push({ word, userId, username, timestamp: Date.now() });
+  story.userCooldowns[userId] = Date.now();
   await client.db.set(storyKey(guildId), story);
 
   return { success: true, story };
@@ -167,7 +187,7 @@ export async function finalizeStory(client, guildId) {
       const channel = await guild.channels.fetch(config.channelId).catch(() => null);
       if (channel) {
         await channel.send(
-          `✨ A new story round has begun! Topic: **${nextStory.topic}**\nUse \`/story word\` to add the first word.`
+          `✨ A new story round has begun! Topic: **${nextStory.topic}**\nJust type a single word in this channel to add the first word.`
         );
       }
     } catch (error) {
@@ -198,4 +218,4 @@ export async function checkStoryExpiration(client) {
   }
 }
 
-export { STORY_DURATION_MS, TOPIC_POOL };
+export { STORY_DURATION_MS, WORD_COOLDOWN_MS, TOPIC_POOL };
