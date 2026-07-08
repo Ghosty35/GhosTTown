@@ -1,17 +1,18 @@
 // commands/fun/story.js
 //
-// /story word    -> add one word to the current story
 // /story status  -> see the story so far + time left in the round
 // /story finish  -> (admin) end the round early
 // /story topic   -> (admin) set the topic for the NEXT round
 // /story channel -> (admin) set which channel the game runs in
+//
+// Members add words by just typing a single word as a normal message in
+// the configured story channel — see events/storyMessage.js for that.
 //
 // This file is auto-discovered by handlers/commandLoader.js — just having
 // it in the commands folder is enough, no manual registration needed.
 
 import { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits } from 'discord.js';
 import {
-  addWord,
   getStory,
   setStoryChannel,
   setNextTopic,
@@ -22,14 +23,6 @@ import {
 const data = new SlashCommandBuilder()
   .setName('story')
   .setDescription('Play the collaborative one-word-at-a-time story game')
-  .addSubcommand((sub) =>
-    sub
-      .setName('word')
-      .setDescription('Add one word to the story')
-      .addStringOption((opt) =>
-        opt.setName('word').setDescription('A single word to add').setRequired(true)
-      )
-  )
   .addSubcommand((sub) =>
     sub.setName('status').setDescription('See the current story so far')
   )
@@ -57,35 +50,6 @@ async function execute(interaction) {
   const sub = interaction.options.getSubcommand();
   const guildId = interaction.guildId;
   const client = interaction.client;
-
-  if (sub === 'word') {
-    const word = interaction.options.getString('word');
-    const result = await addWord(
-      client,
-      guildId,
-      interaction.user.id,
-      interaction.user.username,
-      word
-    );
-
-    if (!result.success && result.reason === 'INVALID_WORD') {
-      return interaction.reply({
-        content: '❌ Please submit exactly **one** word (no spaces or punctuation like . , !).',
-        ephemeral: true,
-      });
-    }
-    if (!result.success && result.reason === 'SAME_USER') {
-      return interaction.reply({
-        content: "⏳ You just added a word — wait for someone else to go before you add another.",
-        ephemeral: true,
-      });
-    }
-
-    const preview = result.story.words.map((w) => w.word).join(' ');
-    return interaction.reply({
-      content: `✅ **${interaction.user.username}** added: "${word.trim()}"\n\n📖 Story so far: ${preview}`,
-    });
-  }
 
   if (sub === 'status') {
     const story = await getStory(client, guildId);
