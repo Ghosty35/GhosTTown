@@ -34,7 +34,8 @@ export default {
             title: '💰 Welcome to Ghost Savings and Loans',
             description:
                 'This server runs on **GhostCoins** — earn them, grow them, and spend them in the shop for perks like name colors and VIP access.\n\n' +
-                'Below is everything you need to know: how to earn, how to protect your coins, and the house rules.',
+                'All your banking — cash, savings, and crypto — lives in one place: run `/atm` anytime to check your balances and manage your money.\n\n' +
+                'Below is everything you need to know: how to earn, how the ATM works, and the house rules.',
             color: 'economy',
         });
 
@@ -51,6 +52,41 @@ export default {
                 { name: '🎁 /daily', value: '$1,000 flat • once every 24 hours', inline: true },
                 { name: '💬 Just chat!', value: '$1 – $5 per message, once per minute — works in any channel, no command needed', inline: false },
             ],
+        });
+
+        const atmEmbed = createEmbed({
+            title: '🏧 Managing Your Money — The ATM',
+            description:
+                'Run `/atm` to open your account. First time you\'ll set a **4-digit PIN** — you\'ll need it every time after that to get in.',
+            color: 'economy',
+            fields: [
+                {
+                    name: 'What you\'ll see',
+                    value: 'One screen with your **Cash**, **Bank**, and **Crypto** balances, plus your total Net Worth.',
+                    inline: false,
+                },
+                {
+                    name: '⬆️ Deposit All / ⬇️ Withdraw All',
+                    value: 'Instantly move everything between your wallet and Ghost Savings and Loans.',
+                    inline: false,
+                },
+                {
+                    name: '✏️ Custom Amount',
+                    value: 'Move a specific amount — pick Deposit or Withdraw and type the number.',
+                    inline: false,
+                },
+                {
+                    name: '📈 Buy Crypto / 📉 Sell Crypto',
+                    value: 'Trade shares on the GhostCoin market right from the ATM (same market as `/invest`).',
+                    inline: false,
+                },
+                {
+                    name: '🔒 Why bother with the bank?',
+                    value: 'Cash in your wallet can be stolen by `/rob`. Money in Ghost Savings and Loans **cannot**.',
+                    inline: false,
+                },
+            ],
+            footer: { text: 'Forgot your PIN? Ask staff — accounts can be reset.' },
         });
 
         const gamesEmbed = createEmbed({
@@ -76,7 +112,8 @@ export default {
                     value:
                         '• Use economy commands in the designated bot channels\n' +
                         '• Respect command cooldowns — spamming won\'t make them shorter\n' +
-                        '• Deposit spare cash into Ghost Savings and Loans — money in the bank is safe from `/rob`, only wallet cash is at risk\n' +
+                        '• Use `/atm` to move spare cash into Ghost Savings and Loans — it\'s the only place your GhostCoins are safe from `/rob`\n' +
+                        '• Set an ATM PIN you\'ll actually remember (staff can reset it, but it\'s a hassle)\n' +
                         '• Check `/shop` for ways to spend your coins\n' +
                         '• Report bugs or exploits to staff instead of using them',
                     inline: false,
@@ -94,7 +131,7 @@ export default {
             footer: { text: 'Have fun, and good luck! 🍀' },
         });
 
-        await targetChannel.send({ embeds: [introEmbed, steadyIncomeEmbed, gamesEmbed, rulesEmbed] });
+        await targetChannel.send({ embeds: [introEmbed, steadyIncomeEmbed, atmEmbed, gamesEmbed, rulesEmbed] });
 
         await InteractionHelper.safeEditReply(interaction, {
             content: `✅ Posted the earning guide to ${targetChannel.toString()}.`,
