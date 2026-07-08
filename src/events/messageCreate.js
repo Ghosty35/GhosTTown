@@ -19,6 +19,7 @@ import {
   recordCorrectCount,
 } from '../services/countingGameService.js';
 import { recordServerActivity } from '../services/investmentService.js';
+import { handleRoastMessage } from '../services/roastService.js';
 
 const MESSAGE_XP_RATE_LIMIT_ATTEMPTS = 12;
 const MESSAGE_XP_RATE_LIMIT_WINDOW_MS = 10000;
@@ -40,6 +41,10 @@ export default {
       }
 
       await handlePrefixCommand(message, client);
+
+      // Roast channel — replies with a roast if this is the designated
+      // channel. Members still earn XP and chat coins in there.
+      await handleRoastMessage(message, client);
 
       await handleLeveling(message, client);
 
