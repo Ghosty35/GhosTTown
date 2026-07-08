@@ -1,0 +1,332 @@
+export const shopItems = [
+    {
+        id: 'extra_work',
+        name: 'Extra Work Shift',
+        price: 5000,
+        description: 'Allows 1 extra use of the `/work` command.',
+        type: 'consumable',
+        maxQuantity: 5,
+cooldown: 86400000,
+        effect: {
+            type: 'command_boost',
+            command: 'work',
+            uses: 1
+        }
+    },
+    {
+        id: 'bank_upgrade_1',
+        name: 'Bank Upgrade I',
+        price: 15000,
+        description: 'Increases bank capacity and allows more funds to be deposited.',
+        type: 'upgrade',
+        maxLevel: 5,
+        effect: {
+            type: 'bank_capacity',
+            multiplier: 1.5
+        }
+    },
+    {
+        id: 'diamond_pickaxe',
+        name: 'Diamond Pickaxe',
+        price: 50000,
+        description: 'Increases yield from `/mine`',
+        type: 'tool',
+        durability: 100,
+        effect: {
+            type: 'mining_yield',
+            multiplier: 2.0
+        }
+    },
+    {
+        id: 'premium_role',
+        name: 'Premium Server Role',
+        price: 15000,
+        description: 'A special role granting a fancy color and a 10% daily bonus.',
+        type: 'role',
+roleId: null,
+        effect: {
+            type: 'daily_bonus',
+            multiplier: 1.1
+        }
+    },
+    {
+        id: 'lucky_clover',
+        name: 'Lucky Clover',
+        price: 10000,
+        description: 'Increases the chance of winning a higher payout on `/gamble` once.',
+        type: 'consumable',
+        maxQuantity: 10,
+        effect: {
+            type: 'gamble_boost',
+            multiplier: 1.5,
+            uses: 1
+        }
+    },
+    {
+        id: 'fishing_rod',
+        name: '🎣 Fishing Rod',
+        price: 5000,
+        description: 'Used for fishing commands',
+        type: 'tool',
+        durability: 100,
+        effect: {
+            type: 'fishing_yield',
+            multiplier: 1.0
+        }
+    },
+    {
+        id: 'pickaxe',
+        name: '⛏️ Pickaxe',
+        price: 7500,
+        description: 'Used for mining commands',
+        type: 'tool',
+        durability: 100,
+        effect: {
+            type: 'mining_yield',
+            multiplier: 1.2
+        }
+    },
+    {
+        id: 'laptop',
+        name: '💻 Laptop',
+        price: 15000,
+        description: 'Increases work earnings',
+        type: 'tool',
+        durability: 200,
+        effect: {
+            type: 'work_yield',
+            multiplier: 1.5
+        }
+    },
+    {
+        id: 'lucky_charm',
+        name: '🍀 Lucky Charm',
+        price: 10000,
+        description: 'Increases luck for gambling. Has 3 uses before being consumed.',
+        type: 'consumable',
+        maxQuantity: 10,
+        effect: {
+            type: 'gamble_boost',
+            multiplier: 1.3,
+            uses: 3
+        }
+    },
+    {
+        id: 'bank_note',
+        name: '📜 Bank Note',
+        price: 25000,
+        description: 'Increases bank capacity by 10,000. Can be purchased multiple times.',
+        type: 'tool',
+        durability: null,
+        effect: {
+            type: 'bank_capacity',
+            increase: 10000
+        }
+    },
+    {
+        id: 'personal_safe',
+        name: '🔒 Personal Safe',
+        price: 30000,
+        description: 'Protects your money from theft. Prevents others from robbing you.',
+        type: 'tool',
+        durability: null,
+        effect: {
+            type: 'robbery_protection',
+            protection: true
+        }
+    },
+
+    // -------------------------------------------------------------------
+    // NEW: Name color roles — one-time purchase, unlocks the color forever.
+    // Owners can switch between any colors they own with /color set.
+    // An admin must link each of these to a real Discord role using
+    // /shop setrole after creating the roles in your server.
+    // -------------------------------------------------------------------
+    {
+        id: 'color_ruby',
+        name: 'Ruby Red',
+        emoji: '🔴',
+        price: 3000,
+        description: 'Unlocks the Ruby Red name color. Switch to it anytime with /color set.',
+        type: 'color_role',
+        colorHex: '#E0115F'
+    },
+    {
+        id: 'color_sapphire',
+        name: 'Sapphire Blue',
+        emoji: '🔵',
+        price: 3000,
+        description: 'Unlocks the Sapphire Blue name color.',
+        type: 'color_role',
+        colorHex: '#0F52BA'
+    },
+    {
+        id: 'color_emerald',
+        name: 'Emerald Green',
+        emoji: '🟢',
+        price: 3000,
+        description: 'Unlocks the Emerald Green name color.',
+        type: 'color_role',
+        colorHex: '#50C878'
+    },
+    {
+        id: 'color_gold',
+        name: 'Golden',
+        emoji: '🟡',
+        price: 4000,
+        description: 'Unlocks the Golden name color.',
+        type: 'color_role',
+        colorHex: '#FFD700'
+    },
+    {
+        id: 'color_amethyst',
+        name: 'Amethyst Purple',
+        emoji: '🟣',
+        price: 3500,
+        description: 'Unlocks the Amethyst Purple name color.',
+        type: 'color_role',
+        colorHex: '#9966CC'
+    },
+
+    // -------------------------------------------------------------------
+    // NEW: VIP access — one-time purchase, permanently grants a role.
+    // Lock a channel to this role in Discord's channel permissions to
+    // create a members-only area. No bot code needed for the lock itself.
+    // -------------------------------------------------------------------
+    {
+        id: 'vip_access',
+        name: 'VIP Access',
+        emoji: '⭐',
+        price: 20000,
+        description: 'Unlocks access to the VIP area of the server, permanently.',
+        type: 'access_role'
+    },
+
+    // -------------------------------------------------------------------
+    // NEW: Job licenses — one-time purchase required before applying for
+    // the matching job with /job apply. See config/jobs.js for pay rates.
+    // -------------------------------------------------------------------
+    {
+        id: 'license_bank_manager',
+        name: 'Bank Manager License',
+        emoji: '🏦',
+        price: 40000,
+        description: 'Required to apply for the Bank Manager job. Pays $60,000–$90,000/week.',
+        type: 'license'
+    },
+    {
+        id: 'license_car_mechanic',
+        name: 'Car Mechanic License',
+        emoji: '🔧',
+        price: 28000,
+        description: 'Required to apply for the Car Mechanic job. Pays $40,000–$65,000/week.',
+        type: 'license'
+    },
+    {
+        id: 'license_scammer',
+        name: 'Scammer License',
+        emoji: '🎭',
+        price: 32000,
+        description: 'Required to apply for the Scammer job. Pays $45,000–$80,000/week.',
+        type: 'license'
+    },
+    {
+        id: 'license_hacker',
+        name: 'Hacker License',
+        emoji: '💻',
+        price: 50000,
+        description: 'Required to apply for the Hacker job. Pays $70,000–$110,000/week.',
+        type: 'license'
+    },
+    {
+        id: 'license_delivery_driver',
+        name: 'Delivery Driver License',
+        emoji: '🚚',
+        price: 20000,
+        description: 'Required to apply for the Delivery Driver job. Pays $30,000–$50,000/week.',
+        type: 'license'
+    },
+    {
+        id: 'license_chef',
+        name: 'Chef License',
+        emoji: '👨‍🍳',
+        price: 24000,
+        description: 'Required to apply for the Chef job. Pays $35,000–$55,000/week.',
+        type: 'license'
+    }
+];
+
+export function getItemById(itemId) {
+    return shopItems.find(item => item.id === itemId);
+}
+
+export function getItemsByType(type) {
+    return shopItems.filter(item => item.type === type);
+}
+
+export function getItemPrice(itemId) {
+    const item = getItemById(itemId);
+    return item ? item.price : 0;
+}
+
+export function validatePurchase(itemId, userData) {
+    const item = getItemById(itemId);
+    if (!item) {
+        return { valid: false, reason: 'Item not found' };
+    }
+
+    const inventory = userData.inventory || {};
+    const upgrades = userData.upgrades || {};
+
+    if (item.type === 'consumable' && item.maxQuantity) {
+        const currentQuantity = inventory[itemId] || 0;
+        if (currentQuantity >= item.maxQuantity) {
+            return { 
+                valid: false, 
+                reason: `You can only have a maximum of ${item.maxQuantity} ${item.name}s` 
+            };
+        }
+    }
+
+    if (item.type === 'upgrade' && item.maxLevel) {
+        
+        if (upgrades[itemId]) {
+            return { 
+                valid: false, 
+                reason: `You've already purchased ${item.name}` 
+            };
+        }
+    }
+
+    if (item.type === 'tool') {
+        
+        const currentQuantity = inventory[itemId] || 0;
+        if (itemId !== 'bank_note' && currentQuantity > 0) {
+            return { 
+                valid: false, 
+                reason: `You already have a ${item.name}` 
+            };
+        }
+    }
+
+    if (item.type === 'role' && item.roleId) {
+        if (userData.roles?.includes(item.roleId)) {
+            return { 
+                valid: false, 
+                reason: `You already have the ${item.name} role` 
+            };
+        }
+    }
+
+    // NEW: color roles, access roles, and job licenses are one-time
+    // purchases, tracked the same way as tools/consumables — in
+    // userData.inventory.
+    if ((item.type === 'color_role' || item.type === 'access_role' || item.type === 'license') && inventory[itemId]) {
+        return {
+            valid: false,
+            reason: `You already own ${item.name}`
+        };
+    }
+
+    return { valid: true };
+}
