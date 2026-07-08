@@ -5,8 +5,8 @@ import { withErrorHandling, createError, ErrorTypes } from '../../utils/errorHan
 import { InteractionHelper } from '../../utils/interactionHelper.js';
 
 const MINE_COOLDOWN = 3 * 60 * 1000;
-const BASE_MIN_REWARD = 600;
-const BASE_MAX_REWARD = 2200;
+const BASE_MIN_REWARD = 1800;
+const BASE_MAX_REWARD = 6500;
 const PICKAXE_MULTIPLIER = 1.2;
 const DIAMOND_PICKAXE_MULTIPLIER = 2.0;
 

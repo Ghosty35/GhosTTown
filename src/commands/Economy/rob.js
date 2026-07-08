@@ -6,8 +6,8 @@ import { InteractionHelper } from '../../utils/interactionHelper.js';
 import { logGameResult } from '../../services/gameLogService.js';
 
 const ROB_COOLDOWN = 4 * 60 * 60 * 1000;
-const BASE_ROB_SUCCESS_CHANCE = 0.05;
-const ROB_PERCENTAGE = 0.05;
+const BASE_ROB_SUCCESS_CHANCE = 0.25;
+const ROB_PERCENTAGE = 0.10;
 const FINE_PERCENTAGE = 0.1;
 
 export default {

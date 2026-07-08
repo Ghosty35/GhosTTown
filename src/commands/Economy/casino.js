@@ -59,12 +59,12 @@ export default {
 // =====================================================================
 const SLOTS_COOLDOWN = 3 * 60 * 1000;
 const SYMBOLS = [
-    { emoji: '🍒', weight: 30, multiplier: 2 },
-    { emoji: '🍋', weight: 25, multiplier: 3 },
-    { emoji: '🔔', weight: 18, multiplier: 5 },
-    { emoji: '⭐', weight: 12, multiplier: 10 },
-    { emoji: '💎', weight: 6, multiplier: 25 },
-    { emoji: '7️⃣', weight: 2, multiplier: 50 },
+    { emoji: '🍒', weight: 30, multiplier: 3 },
+    { emoji: '🍋', weight: 25, multiplier: 4 },
+    { emoji: '🔔', weight: 18, multiplier: 8 },
+    { emoji: '⭐', weight: 12, multiplier: 15 },
+    { emoji: '💎', weight: 6, multiplier: 40 },
+    { emoji: '7️⃣', weight: 2, multiplier: 100 },
 ];
 const TOTAL_WEIGHT = SYMBOLS.reduce((sum, s) => sum + s.weight, 0);
 
@@ -282,7 +282,7 @@ async function resolveBlackjack(interaction, client, guildId, userId, betAmount,
     let resultEmbed;
 
     if (outcome === 'player_blackjack') {
-        payout = Math.floor(betAmount * 2.5);
+        payout = Math.floor(betAmount * 3);
         resultEmbed = successEmbed('🃏 Blackjack!', `**Your hand:** ${formatHand(playerHand)} (21)\n**Dealer's hand:** ${formatHand(dealerHand)} (${dealerTotal})\n\nNatural blackjack! You win **$${payout.toLocaleString()}**.`);
     } else if (outcome === 'player_bust') {
         payout = 0;
@@ -405,10 +405,10 @@ async function executeCoinflip(interaction, client) {
 // =====================================================================
 // GAMBLE
 // =====================================================================
-const BASE_WIN_CHANCE = 0.5;
+const BASE_WIN_CHANCE = 0.55;
 const CLOVER_WIN_BONUS = 0.2;
 const CHARM_WIN_BONUS = 0.1;
-const PAYOUT_MULTIPLIER = 2.0;
+const PAYOUT_MULTIPLIER = 2.2;
 const GAMBLE_COOLDOWN = 3 * 60 * 1000;
 
 async function executeGamble(interaction, client) {

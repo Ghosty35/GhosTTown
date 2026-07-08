@@ -8,11 +8,11 @@ import { InteractionHelper } from '../../utils/interactionHelper.js';
 const SLUT_COOLDOWN = 3 * 60 * 1000;
 
 const SLUT_ACTIVITIES = [
-    { name: "Cam Stream", min: 1200, max: 2500, risk: 0.2 },
-    { name: "Private Dance Session", min: 1500, max: 3000, risk: 0.25 },
-    { name: "After-Hours Club Host", min: 2000, max: 3500, risk: 0.3 },
-    { name: "VIP Companion Booking", min: 5500, max: 14000, risk: 0.35 },
-    { name: "Exclusive Livestream", min: 8500, max: 22000, risk: 0.4 },
+    { name: "Cam Stream", min: 3500, max: 7500, risk: 0.2 },
+    { name: "Private Dance Session", min: 4500, max: 9000, risk: 0.25 },
+    { name: "After-Hours Club Host", min: 6000, max: 10500, risk: 0.3 },
+    { name: "VIP Companion Booking", min: 16500, max: 42000, risk: 0.35 },
+    { name: "Exclusive Livestream", min: 25500, max: 66000, risk: 0.4 },
 ];
 
 const POSITIVE_OUTCOMES = [
