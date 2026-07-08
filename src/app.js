@@ -262,7 +262,7 @@ class TitanBot extends Client {
     cron.schedule('*/15 * * * *', () => updateAllMarkets(this));
     cron.schedule('*/15 * * * *', () => checkStoryExpiration(this));
     cron.schedule('0 * * * *', () => payAllWeeklyWages(this));
-    cron.schedule('*/2 * * * *', () => refreshAllDashboards(this));
+    cron.schedule('*/30 * * * * *', () => refreshAllDashboards(this));
   }
 
   async updateAllCounters() {
