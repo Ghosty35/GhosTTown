@@ -9,6 +9,7 @@ import { createInteractionTraceContext, runWithTraceContext } from '../utils/log
 import { validateChatInputPayloadOrThrow } from '../utils/commandInputValidation.js';
 import { enforceAbuseProtection, formatCooldownDuration } from '../utils/abuseProtection.js';
 import { isCommandEnabled } from '../services/commandAccessService.js';
+import { checkChannelRestriction } from '../services/channelRestrictionService.js';
 import { resolveSlashAccessKey } from '../utils/messageAdapter.js';
 import { isCollectorManagedComponent } from '../utils/collectorComponents.js';
 import { ResponseCoordinator } from '../utils/responseCoordinator.js';
@@ -90,6 +91,16 @@ export default {
                   ErrorTypes.CONFIGURATION,
                   'This command has been disabled for this server.',
                   withTraceContext({ commandName: accessKey, guildId: interaction.guild.id }, interactionTraceContext)
+                );
+              }
+
+              const channelCheck = await checkChannelRestriction(client, interaction.guild.id, interaction.channelId, interaction.commandName);
+              if (!channelCheck.allowed) {
+                throw createError(
+                  `Command ${interaction.commandName} used outside its restricted channel`,
+                  ErrorTypes.VALIDATION,
+                  `This command can only be used in <#${channelCheck.requiredChannelId}>.`,
+                  withTraceContext({ commandName: interaction.commandName, guildId: interaction.guild.id }, interactionTraceContext)
                 );
               }
             }
