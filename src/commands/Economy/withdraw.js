@@ -7,7 +7,7 @@ import { InteractionHelper } from '../../utils/interactionHelper.js';
 export default {
     data: new SlashCommandBuilder()
         .setName('withdraw')
-        .setDescription('Withdraw money from your bank to your wallet')
+        .setDescription('Withdraw money from Ghost Savings and Loans to your wallet')
         .addIntegerOption(option =>
             option
                 .setName('amount')
@@ -53,7 +53,7 @@ export default {
                 throw createError(
                     "Empty bank account",
                     ErrorTypes.VALIDATION,
-                    "Your bank account is empty.",
+                    "Your Ghost Savings and Loans account is empty.",
                     { userId, bankBalance: userData.bank }
                 );
             }
@@ -65,7 +65,7 @@ export default {
 
             const embed = successEmbed(
                 'Withdrawal Successful',
-                `You successfully withdrew **$${withdrawAmount.toLocaleString()}** from your bank.`
+                `You successfully withdrew **$${withdrawAmount.toLocaleString()}** from Ghost Savings and Loans.`
             )
                 .addFields(
                     {
@@ -74,7 +74,7 @@ export default {
                         inline: true,
                     },
                     {
-                        name: "New Bank Balance",
+                        name: "Ghost Savings and Loans Balance",
                         value: `$${userData.bank.toLocaleString()}`,
                         inline: true,
                     },

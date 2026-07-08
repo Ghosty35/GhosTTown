@@ -7,7 +7,7 @@ import { InteractionHelper } from '../../utils/interactionHelper.js';
 export default {
     data: new SlashCommandBuilder()
         .setName('deposit')
-        .setDescription('Deposit money from your wallet into your bank')
+        .setDescription('Deposit money from your wallet into Ghost Savings and Loans')
         .addStringOption(option =>
             option
                 .setName('amount')
@@ -80,7 +80,7 @@ export default {
                 throw createError(
                     "Bank is full",
                     ErrorTypes.VALIDATION,
-                    `Your bank is currently full (Max Capacity: $${maxBank.toLocaleString()}). Purchase a **Bank Upgrade** to increase your limit.`,
+                    `Your Ghost Savings and Loans account is currently full (Max Capacity: $${maxBank.toLocaleString()}). Purchase a **Bank Upgrade** to increase your limit.`,
                     { maxBank, currentBank: userData.bank, userId }
                 );
             }
@@ -118,7 +118,7 @@ export default {
 
             const embed = successEmbed(
                 'Deposit Successful',
-                `You successfully deposited **$${depositAmount.toLocaleString()}** into your bank.`
+                `You successfully deposited **$${depositAmount.toLocaleString()}** into Ghost Savings and Loans.`
             )
                 .addFields(
                     {
@@ -127,7 +127,7 @@ export default {
                         inline: true,
                     },
                     {
-                        name: "New Bank Balance",
+                        name: "Ghost Savings and Loans Balance",
                         value: `$${userData.bank.toLocaleString()} / $${maxBank.toLocaleString()}`,
                         inline: true,
                     },
