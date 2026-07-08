@@ -36,8 +36,8 @@ const COOLDOWN_ACTIONS = [
     ['🎣', '/fish', 'lastFish', 3 * 60 * 1000],
     ['⛏️', '/mine', 'lastMine', 3 * 60 * 1000],
     ['🎁', '/daily', 'lastDaily', 24 * 60 * 60 * 1000],
-    ['🎲', '/gamble', 'lastGamble', 3 * 60 * 1000],
-    ['🎰', '/slots', 'lastSlots', 3 * 60 * 1000],
+    ['🎲', '/casino gamble', 'lastGamble', 3 * 60 * 1000],
+    ['🎰', '/casino slots', 'lastSlots', 3 * 60 * 1000],
     ['🦹', '/rob', 'lastRob', 4 * 60 * 60 * 1000],
 ];
 
