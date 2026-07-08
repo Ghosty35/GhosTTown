@@ -4,14 +4,23 @@ import { handleInteractionError } from '../../utils/errorHandler.js';
 import { playQuery, replyMusicSuccess } from '../../services/music/musicActions.js';
 
 export default {
-    slashOnly: true,
-    category: 'Music',
-    data: new SlashCommandBuilder()
-        .setName('play')
-        .setDescription('Play a song or add it to the queue')
-        .addStringOption((opt) =>
-            opt.setName('query').setDescription('Song name or URL').setRequired(true),
-        ),
+    // Inside your play command execute function
+const query = interaction.options.getString('song') || args.join(' ');
+
+if (!query) {
+    return interaction.reply({ content: 'Please provide a song name or link!', ephemeral: true });
+}
+
+// Auto YouTube search if it's not already a URL
+let searchQuery = query;
+if (!query.startsWith('http')) {
+    searchQuery = `ytsearch:${query}`;   // This tells Lavalink to search YouTube
+}
+
+const result = await player.search(searchQuery, interaction.user);
+
+,
+
 
     async execute(interaction, config, client) {
         try {
