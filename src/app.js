@@ -19,6 +19,7 @@ import pkg from '../package.json' with { type: 'json' };
 import { EXPECTED_SCHEMA_VERSION, EXPECTED_SCHEMA_LABEL } from './config/schemaVersion.js';
 import { checkStoryExpiration } from './services/storyService.js';
 import { payAllWeeklyWages } from './services/jobsService.js';
+import { refreshAllDashboards } from './services/dashboardService.js';
 
 class TitanBot extends Client {
   constructor() {
@@ -261,6 +262,7 @@ class TitanBot extends Client {
     cron.schedule('*/15 * * * *', () => updateAllMarkets(this));
     cron.schedule('*/15 * * * *', () => checkStoryExpiration(this));
     cron.schedule('0 * * * *', () => payAllWeeklyWages(this));
+    cron.schedule('*/2 * * * *', () => refreshAllDashboards(this));
   }
 
   async updateAllCounters() {
