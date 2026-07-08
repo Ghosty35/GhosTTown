@@ -18,6 +18,7 @@ import { shutdownMusic } from './services/music/playerHandler.js';
 import pkg from '../package.json' with { type: 'json' };
 import { EXPECTED_SCHEMA_VERSION, EXPECTED_SCHEMA_LABEL } from './config/schemaVersion.js';
 import { checkStoryExpiration } from './services/storyService.js';
+import { payAllWeeklyWages } from './services/jobsService.js';
 
 class TitanBot extends Client {
   constructor() {
@@ -259,6 +260,7 @@ class TitanBot extends Client {
     cron.schedule('*/15 * * * *', () => this.updateAllCounters());
     cron.schedule('*/15 * * * *', () => updateAllMarkets(this));
     cron.schedule('*/15 * * * *', () => checkStoryExpiration(this));
+    cron.schedule('0 * * * *', () => payAllWeeklyWages(this));
   }
 
   async updateAllCounters() {
