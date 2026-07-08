@@ -47,6 +47,191 @@ function onCooldown(userId) {
 }
 
 // ---------------------------------------------------------------------
+// 0) SMART LAYER — real answers to real-life questions, in roast character
+//
+// Runs before the roast picker. Handles:
+//   • Weather  — live data from Open-Meteo (free, no API key needed)
+//   • Time / date questions
+//   • Math     — "what's 128 * 42" style arithmetic
+//   • Anything else question-shaped → answered by AI, IF the server
+//     owner has set ANTHROPIC_API_KEY in the .env (optional).
+// ---------------------------------------------------------------------
+
+const WEATHER_CODES = {
+    0: '☀️ clear skies', 1: '🌤️ mostly clear', 2: '⛅ partly cloudy', 3: '☁️ overcast',
+    45: '🌫️ foggy', 48: '🌫️ icy fog', 51: '🌦️ light drizzle', 53: '🌦️ drizzle',
+    55: '🌧️ heavy drizzle', 61: '🌧️ light rain', 63: '🌧️ rain', 65: '🌧️ heavy rain',
+    66: '🌧️ freezing rain', 67: '🌧️ heavy freezing rain', 71: '🌨️ light snow',
+    73: '🌨️ snow', 75: '❄️ heavy snow', 77: '❄️ snow grains', 80: '🌦️ light showers',
+    81: '🌧️ showers', 82: '⛈️ violent showers', 85: '🌨️ snow showers',
+    86: '❄️ heavy snow showers', 95: '⛈️ thunderstorm', 96: '⛈️ thunderstorm with hail',
+    99: '⛈️ severe thunderstorm with hail',
+};
+
+async function fetchWithTimeout(url, ms = 8000) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), ms);
+    try {
+        const res = await fetch(url, { signal: controller.signal });
+        return res.ok ? await res.json() : null;
+    } catch {
+        return null;
+    } finally {
+        clearTimeout(timer);
+    }
+}
+
+async function answerWeather(content, username) {
+    const match = content.match(
+        /(?:weather|temperature|temp|how (?:hot|cold|warm) is it|is it (?:raining|snowing|sunny|cold|hot))\s*(?:like\s*)?(?:in|at|for)?\s+([a-zA-Z\u00C0-\u024F' .-]{2,40})\??$/i
+    ) || content.match(/^weather\s+([a-zA-Z\u00C0-\u024F' .-]{2,40})\??$/i);
+
+    if (!match) {
+        // Weather asked but no place given.
+        if (/\b(weather|temperature|how (hot|cold|warm) is it|is it raining)\b/i.test(content)) {
+            return `I'd love to tell you the weather, ${username}, but you forgot to mention WHERE. Try "weather in Amsterdam" — I know geography is hard for you. 🌍`;
+        }
+        return null;
+    }
+
+    const place = match[1].trim();
+    const geo = await fetchWithTimeout(
+        `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(place)}&count=1&language=en`
+    );
+    const loc = geo?.results?.[0];
+    if (!loc) {
+        return `"${place}"? Never heard of it, ${username}. Either it doesn't exist or your spelling just committed a crime worse than \`/crime\`. 🗺️`;
+    }
+
+    const wx = await fetchWithTimeout(
+        `https://api.open-meteo.com/v1/forecast?latitude=${loc.latitude}&longitude=${loc.longitude}&current=temperature_2m,apparent_temperature,relative_humidity_2m,wind_speed_10m,weather_code`
+    );
+    const cur = wx?.current;
+    if (!cur) {
+        return `The weather service ghosted me, ${username}. Even APIs don't want to talk to you. Try again in a minute.`;
+    }
+
+    const desc = WEATHER_CODES[cur.weather_code] || '🌍 some weather';
+    const name = `${loc.name}${loc.country ? `, ${loc.country}` : ''}`;
+    return (
+        `🌡️ **${name}** right now: **${Math.round(cur.temperature_2m)}°C** (feels like ${Math.round(cur.apparent_temperature)}°C), ${desc}, ` +
+        `💨 wind ${Math.round(cur.wind_speed_10m)} km/h, 💧 humidity ${cur.relative_humidity_2m}%.\n` +
+        `There, ${username} — I did in 2 seconds what a window could've done for free.`
+    );
+}
+
+function answerTimeDate(content, username) {
+    if (/\bwhat(?:'s| is)? (?:the )?time\b|\bwhat time is it\b/i.test(content)) {
+        return `It's <t:${Math.floor(Date.now() / 1000)}:t> right now, ${username}. Yes, that's your OWN timezone — even I can't fix your sleep schedule. 🕐`;
+    }
+    if (/\bwhat(?:'s| is)? (?:the )?(?:date|day)( today)?\b|\bwhat day is it\b/i.test(content)) {
+        return `Today is <t:${Math.floor(Date.now() / 1000)}:D>, ${username}. Losing track of the days? The unemployment is showing. 📅`;
+    }
+    return null;
+}
+
+function answerMath(content, username) {
+    const match = content.match(/(?:what(?:'s| is)\s+|calculate\s+|^)([\d\s+\-*/().^%]{3,60})[=?]*\s*$/i);
+    if (!match) return null;
+    const expr = match[1].trim();
+    if (!/\d/.test(expr) || !/[+\-*/^%]/.test(expr)) return null;
+    if (!/^[\d\s+\-*/().^%]+$/.test(expr)) return null;
+
+    try {
+        const result = Function(`"use strict"; return (${expr.replaceAll('^', '**')});`)();
+        if (typeof result !== 'number' || !Number.isFinite(result)) return null;
+        const rounded = Math.round(result * 10000) / 10000;
+        return `${expr} = **${rounded.toLocaleString()}**. A calculator has entered the chat because ${username} couldn't. 🧮`;
+    } catch {
+        return null;
+    }
+}
+
+function looksLikeQuestion(content) {
+    return (
+        /\?/.test(content) ||
+        /^(who|what|when|where|why|how|can|could|does|do|did|is|are|was|were|should|would|will|tell me|show me|explain|define|give me)\b/i.test(content.trim())
+    );
+}
+
+async function answerWithAI(content, username) {
+    const apiKey = process.env.ANTHROPIC_API_KEY;
+    if (!apiKey) return null;
+
+    try {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), 15000);
+
+        const response = await fetch('https://api.anthropic.com/v1/messages', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'x-api-key': apiKey,
+                'anthropic-version': '2023-06-01',
+            },
+            signal: controller.signal,
+            body: JSON.stringify({
+                model: 'claude-haiku-4-5',
+                max_tokens: 300,
+                system:
+                    'You are the resident roast-bot of a Discord server called GhostTown. ' +
+                    'A member asked you a question in the roast channel. Answer it genuinely and correctly ' +
+                    '(this is the priority — be actually helpful), but wrap it in playful, PG-13 roast energy ' +
+                    'aimed at the asker. Light teasing about them asking a bot, never slurs, never cruelty about ' +
+                    'real-life traits, no adult content. Keep it under 120 words. Plain text only, Discord-friendly. ' +
+                    `The member's display name is "${username}".`,
+                messages: [{ role: 'user', content: content.slice(0, 500) }],
+            }),
+        });
+        clearTimeout(timer);
+
+        if (!response.ok) {
+            logger.warn(`Roast AI request failed with status ${response.status}`);
+            return null;
+        }
+
+        const data = await response.json();
+        const text = data?.content?.filter((b) => b.type === 'text').map((b) => b.text).join('\n').trim();
+        return text ? text.slice(0, 1900) : null;
+    } catch (error) {
+        logger.warn('Roast AI request errored:', error?.message || error);
+        return null;
+    }
+}
+
+async function trySmartAnswer(message) {
+    const content = message.content.trim();
+    const username = message.author.toString();
+
+    // Cheap local handlers first — no API cost, instant.
+    const weather = await answerWeather(content, username);
+    if (weather) return weather;
+
+    const time = answerTimeDate(content, username);
+    if (time) return time;
+
+    const math = answerMath(content, username);
+    if (math) return math;
+
+    // If a contextual comeback category matches, let the (free) roast
+    // picker handle it instead of spending an AI call on banter like
+    // "how are you" or "roast me".
+    for (const category of CONTEXTUAL) {
+        if (category.match !== CONTEXTUAL[CONTEXTUAL.length - 1].match && category.match.test(content)) {
+            return null;
+        }
+    }
+
+    // Anything else question-shaped → AI (only if the owner set a key).
+    if (looksLikeQuestion(content)) {
+        const ai = await answerWithAI(content, username);
+        if (ai) return ai;
+    }
+
+    return null;
+}
+
+// ---------------------------------------------------------------------
 // 1) CONTEXTUAL COMEBACKS — first matching category wins
 // ---------------------------------------------------------------------
 const CONTEXTUAL = [
@@ -255,6 +440,20 @@ export async function handleRoastMessage(message, client) {
         if (message.content.startsWith(prefix) || message.content.startsWith('/')) return true;
 
         if (onCooldown(message.author.id)) return true;
+
+        // SMART LAYER FIRST — real questions get real answers (weather,
+        // time, math, or AI for anything else), delivered in character.
+        const smartAnswer = await trySmartAnswer(message);
+        if (smartAnswer) {
+            await message.channel.sendTyping();
+            const smartDelay = 600 + Math.random() * 1200;
+            setTimeout(() => {
+                message.reply({ content: smartAnswer, allowedMentions: { repliedUser: true } }).catch((err) => {
+                    logger.error('Failed to send smart roast reply:', err);
+                });
+            }, smartDelay);
+            return true;
+        }
 
         // Decide the flavor: contextual > personal (40%) > generic.
         let line = null;
