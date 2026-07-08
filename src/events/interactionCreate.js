@@ -436,10 +436,13 @@ if (interaction.isButton() && interaction.customId.startsWith('role:')) {
 
     // Map button ID to actual role ID (customize this!)
     const roleMap = {
-        'announcements': 'ROLE_ID_HERE',   // Replace with real role IDs
-        'games': 'ROLE_ID_HERE',
-        'memes': 'ROLE_ID_HERE',
-        'roast-pit': 'ROLE_ID_HERE',
+        'Gta News': '1197296528361017356',   // Replace with real role IDs
+        'Forza Gamers': '1510737840718221384',
+        'Game Updates/News': '1524096202432315603',
+        'Game Corner': '1469137327208005815',
+        'Verified': '1013631705506123816',
+        'Forza Gamers': '1510737840718221384',
+      
     };
 
     const roleId = roleMap[roleName];
