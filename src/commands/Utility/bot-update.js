@@ -143,13 +143,13 @@ export default {
             description: 'All stocks got a huge boost — and the market now has an **upward drift**, so holding shares is profitable on average. 📈',
             color: 'economy',
             fields: [
-                { name: '👻 Ghost Corp (GHST)', value: '$100 → **$900**', inline: true },
-                { name: '🏙️ Town Holdings (TOWN)', value: '$250 → **$2,500**', inline: true },
-                { name: '🚀 MoonShot (MOON)', value: '$40 → **$300**', inline: true },
-                { name: '🥇 Golden Reserve (GOLD)', value: '$500 → **$5,000**', inline: true },
-                { name: '🪙 CryptoCoin (CRYP)', value: '$20 → **$175**', inline: true },
-                { name: '🌾 Farmland (FARM)', value: '$80 → **$700**', inline: true },
-                { name: '📊 Server Exchange (SRVX)', value: 'NEW at **$2,000**', inline: true },
+                { name: '👻 Ghost Corp (GHST)', value: 'now **$1,500** base', inline: true },
+                { name: '🏙️ Town Holdings (TOWN)', value: 'now **$4,000** base', inline: true },
+                { name: '🕶️ MandoCorp.co (MOON)', value: 'REBRANDED! now **$600** base', inline: true },
+                { name: '🥇 Golden Reserve (GOLD)', value: 'now **$8,000** base', inline: true },
+                { name: '🪙 CryptoCoin (CRYP)', value: 'now **$350** base — ±35% swings!', inline: true },
+                { name: '🌿 WeedFarms.co (FARM)', value: 'REBRANDED! now **$1,200** base', inline: true },
+                { name: '📊 Server Exchange (SRVX)', value: 'now **$3,500** base, up to **+10%/tick** when chat pops', inline: true },
             ],
             footer: { text: '📈 Prices update every 15 minutes — check /invest market' },
         });
@@ -163,7 +163,7 @@ export default {
             fields: [
                 {
                     name: '🏦 Heist payouts',
-                    value: 'Tuned to the new market prices — roughly **$7k–$18k per heist**, split between partners.',
+                    value: 'Tuned to the new market prices — scales with the market — bigger index, bigger scores, split between partners.',
                     inline: false,
                 },
                 {
