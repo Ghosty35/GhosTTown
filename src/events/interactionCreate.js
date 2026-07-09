@@ -311,44 +311,79 @@ export default {
               handler: 'general'
             }, interactionTraceContext));
           }
-        } else if (interaction.isStringSelectMenu()) {
-          const [customId, ...args] = interaction.customId.split(':');
-          const selectMenu = client.selectMenus.get(customId);
+              } else if (interaction.isStringSelectMenu()) {
+            const [customId, ...args] = interaction.customId.split(':');
+            const selectMenu = client.selectMenus.get(customId);
 
-          if (!selectMenu) {
-            if (!interaction.customId.includes(':') || isCollectorManagedComponent(customId)) {
-              return;
+            if (interaction.customId === 'role_select_dropdown') {
+                // === DROPDOWN ROLE SELECTOR ===
+                await interaction.deferReply({ ephemeral: true });
+
+                const selectedValues = interaction.values;
+                const member = interaction.member;
+
+                // Map dropdown values to actual Role IDs
+                const roleMap = {
+                    'announcements': 'YOUR_ROLE_ID_HERE',
+                    'games': 'YOUR_ROLE_ID_HERE',
+                    'memes': 'YOUR_ROLE_ID_HERE',
+                    'roast-pit': 'YOUR_ROLE_ID_HERE',
+                    'music': 'YOUR_ROLE_ID_HERE',
+                    'giveaways': 'YOUR_ROLE_ID_HERE',
+                };
+
+                const added = [];
+                const removed = [];
+
+                for (const [value, roleId] of Object.entries(roleMap)) {
+                    if (!roleId) continue;
+                    const role = interaction.guild.roles.cache.get(roleId);
+                    if (!role) continue;
+
+                    if (selectedValues.includes(value)) {
+                        if (!member.roles.cache.has(roleId)) {
+                            await member.roles.add(roleId).catch(() => {});
+                            added.push(role.name);
+                        }
+                    } else {
+                        if (member.roles.cache.has(roleId)) {
+                            await member.roles.remove(roleId).catch(() => {});
+                            removed.push(role.name);
+                        }
+                    }
+                }
+
+                let replyText = '';
+                if (added.length) replyText += `✅ **Added:** ${added.join(', ')}\n`;
+                if (removed.length) replyText += `❌ **Removed:** ${removed.join(', ')}\n`;
+                if (!replyText) replyText = 'No role changes made.';
+
+                await interaction.editReply({ content: replyText });
+                return; // Important: stop further processing
             }
 
-            throw createError(
-              `No select menu handler found for ${customId}`,
-              ErrorTypes.CONFIGURATION,
-              'This select menu is not available.',
-              withTraceContext({ customId }, interactionTraceContext)
-            );
-          }
+            if (!selectMenu) {
+                if (!interaction.customId.includes(':') || isCollectorManagedComponent(customId)) {
+                    return;
+                }
 
-          try {
-            await selectMenu.execute(interaction, client, args);
-          } catch (error) {
-            await handleInteractionError(interaction, error, withTraceContext({
-              type: 'select_menu',
-              customId: interaction.customId
-            }, interactionTraceContext));
-          }
-        } else if (interaction.isModalSubmit()) {
-          if (interaction.customId.startsWith('app_modal_')) {
+                throw createError(
+                    `No select menu handler found for ${customId}`,
+                    ErrorTypes.CONFIGURATION,
+                    'This select menu is not available.',
+                    withTraceContext({ customId }, interactionTraceContext)
+                );
+            }
+
             try {
-              await handleApplicationModal(interaction);
+                await selectMenu.execute(interaction, client, args);
             } catch (error) {
-              await handleInteractionError(interaction, error, withTraceContext({
-                type: 'modal',
-                customId: interaction.customId,
-                handler: 'application'
-              }, interactionTraceContext));
+                await handleInteractionError(interaction, error, withTraceContext({
+                    type: 'select_menu',
+                    customId: interaction.customId
+                }, interactionTraceContext));
             }
-            return;
-          }
+        }
 
           if (interaction.customId.startsWith('app_review_')) {
             try {
