@@ -519,10 +519,5 @@ if (interaction.isButton() && interaction.customId.startsWith('role:')) {
             content: 'Failed to update role. Make sure the bot has permission.', 
             ephemeral: true 
         });
-    }
-}
-        }
-      }
-    });
   }
 };
