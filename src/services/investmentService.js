@@ -33,21 +33,20 @@ export function recordServerActivity(guildId) {
 // First matching tier wins. Tune these to your server's size: a small
 // server might lower every threshold, a huge one might raise them.
 const ACTIVITY_TIERS = [
-    { minMessages: 200, change: +0.08 },  // buzzing → +8%
-    { minMessages: 100, change: +0.05 },
-    { minMessages: 50,  change: +0.03 },
-    { minMessages: 20,  change: +0.015 },
-    { minMessages: 5,   change: +0.005 }, // quiet but alive → slight climb
-    { minMessages: 1,   change: -0.015 },
-    { minMessages: 0,   change: -0.04 },  // dead silence → -4%
+    { minMessages: 150, change: +0.10 },  // buzzing → +10%
+    { minMessages: 75,  change: +0.06 },
+    { minMessages: 40,  change: +0.04 },
+    { minMessages: 15,  change: +0.02 },
+    { minMessages: 5,   change: +0.01 },  // quiet but alive → slight climb
+    { minMessages: 1,   change: -0.01 },
+    { minMessages: 0,   change: -0.05 },  // dead silence → -5%
 ];
 
-// Slight upward bias applied to every regular asset each tick (+0.8%).
-// This makes long-term holding profitable on average (~+3.2%/hour if
-// prices tick every 15 min), giving players a real reason to invest
-// instead of the market being a pure coin flip. Raise it for a more
-// generous market, set to 0 for the old neutral random walk.
-const MARKET_DRIFT = 0.008;
+// Upward bias applied to every regular asset each tick (+1.5%).
+// That's roughly +6%/hour on average — holding stocks WILL make you
+// money over time, and timing the wild swings can beat it. Raise for
+// an even more generous market, set to 0 for a neutral random walk.
+const MARKET_DRIFT = 0.015;
 
 function getActivityChange(messageCount) {
     const tier = ACTIVITY_TIERS.find((t) => messageCount >= t.minMessages);
