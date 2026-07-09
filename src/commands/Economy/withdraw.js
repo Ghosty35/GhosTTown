@@ -63,22 +63,41 @@ export default {
 
             await setEconomyData(client, guildId, userId, userData);
 
+            const maxBank = getMaxBankCapacity(userData);
+            const pct = Math.min(1, maxBank > 0 ? userData.bank / maxBank : 0);
+            const filled = Math.round(pct * 10);
+            const vaultBar = '▰'.repeat(filled) + '▱'.repeat(10 - filled);
+
+            const FLAVOR = [
+                'Cash counted, stacked, and handed over in a suspicious briefcase. 💼',
+                'The teller ghost waves goodbye to your money. 👻👋',
+                'Spend it wisely. Or don\'t — the casino thanks you either way. 🎰',
+                'Fresh bills, still warm from the vault. 🔥',
+                'Reminder: wallet cash CAN be robbed. Watch your back out there. 👀',
+            ];
+
             const embed = successEmbed(
-                'Withdrawal Successful',
-                `You successfully withdrew **$${withdrawAmount.toLocaleString()}** from Ghost Savings and Loans.`
+                '🏦 Ghost Savings & Loans — Withdrawal Complete',
+                `💰 **$${withdrawAmount.toLocaleString()}** is now in your pocket.\n*${FLAVOR[Math.floor(Math.random() * FLAVOR.length)]}*`
             )
                 .addFields(
                     {
-                        name: "New Cash Balance",
+                        name: '💵 Wallet',
                         value: `$${userData.wallet.toLocaleString()}`,
                         inline: true,
                     },
                     {
-                        name: "Ghost Savings and Loans Balance",
-                        value: `$${userData.bank.toLocaleString()}`,
+                        name: '🏦 Vault Balance',
+                        value: `$${userData.bank.toLocaleString()} / $${maxBank.toLocaleString()}`,
                         inline: true,
                     },
-                );
+                    {
+                        name: '📊 Vault Capacity',
+                        value: `${vaultBar} **${Math.round(pct * 100)}%**`,
+                        inline: false,
+                    },
+                )
+                .setFooter({ text: '🔓 Wallet cash is fair game for /rob • Ghost Savings & Loans, est. 1913' });
 
             await InteractionHelper.safeEditReply(interaction, { embeds: [embed] });
     }, { command: 'withdraw' })

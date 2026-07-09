@@ -116,22 +116,41 @@ export default {
 
             await setEconomyData(client, guildId, userId, userData);
 
+            // Vault capacity bar, e.g. ▰▰▰▰▰▰▱▱▱▱ 61%
+            const pct = Math.min(1, userData.bank / maxBank);
+            const filled = Math.round(pct * 10);
+            const vaultBar = '▰'.repeat(filled) + '▱'.repeat(10 - filled);
+
+            const FLAVOR = [
+                'Your money is now sleeping behind 3 feet of haunted steel. 🔐',
+                'The vault door closes with a satisfying *THUNK*. 🚪',
+                'Wise move — robbers can only dream about this now. 🦹❌',
+                'Our ghost tellers counted it twice. It checks out. 👻',
+                'Compound interest not included, peace of mind is. ✨',
+            ];
+
             const embed = successEmbed(
-                'Deposit Successful',
-                `You successfully deposited **$${depositAmount.toLocaleString()}** into Ghost Savings and Loans.`
+                '🏦 Ghost Savings & Loans — Deposit Confirmed',
+                `💸 **$${depositAmount.toLocaleString()}** has been secured in your vault.\n*${FLAVOR[Math.floor(Math.random() * FLAVOR.length)]}*`
             )
                 .addFields(
                     {
-                        name: "New Cash Balance",
+                        name: '💵 Wallet',
                         value: `$${userData.wallet.toLocaleString()}`,
                         inline: true,
                     },
                     {
-                        name: "Ghost Savings and Loans Balance",
+                        name: '🏦 Vault Balance',
                         value: `$${userData.bank.toLocaleString()} / $${maxBank.toLocaleString()}`,
                         inline: true,
                     },
-                );
+                    {
+                        name: '📊 Vault Capacity',
+                        value: `${vaultBar} **${Math.round(pct * 100)}%**${pct >= 0.9 ? '\n⚠️ *Nearly full — grab a 📜 Bank Note or 🏦 Bank Upgrade in the shop!*' : ''}`,
+                        inline: false,
+                    },
+                )
+                .setFooter({ text: '🔐 Vault funds are safe from /rob • Ghost Savings & Loans, est. 1913' });
 
             await InteractionHelper.safeEditReply(interaction, { embeds: [embed] });
     }, { command: 'deposit' })
