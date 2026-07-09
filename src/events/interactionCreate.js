@@ -38,15 +38,94 @@ export default {
         ResponseCoordinator.attach(interaction);
 
         if (interaction.isChatInputCommand()) {
-          // ... (your existing chat command code - leave it as is)
-          // I kept it short for brevity, but keep your full block here
+          try {
+            logger.info(`Command executed: /${interaction.commandName} by ${interaction.user.tag}`, {
+              event: 'interaction.command.received',
+              traceId: interactionTraceContext.traceId,
+              guildId: interaction.guildId,
+              userId: interaction.user?.id,
+              command: interaction.commandName
+            });
+
+            validateChatInputPayloadOrThrow(interaction, withTraceContext({
+              type: 'command_input_validation',
+              commandName: interaction.commandName
+            }, interactionTraceContext));
+
+            const command = client.commands.get(interaction.commandName);
+
+            if (!command) {
+              throw createError(
+                `No command matching ${interaction.commandName} was found.`,
+                ErrorTypes.CONFIGURATION,
+                'Sorry, that command does not exist.',
+                withTraceContext({ commandName: interaction.commandName }, interactionTraceContext)
+              );
+            }
+
+            const abuseProtection = await enforceAbuseProtection(interaction, command, interaction.commandName);
+            if (!abuseProtection.allowed) {
+              const formattedCooldown = formatCooldownDuration(abuseProtection.remainingMs);
+              throw createError(
+                `Risky command cooldown active for ${interaction.commandName}`,
+                ErrorTypes.RATE_LIMIT,
+                `This command is on cooldown. Please wait ${formattedCooldown} before trying again.`,
+                withTraceContext({
+                  commandName: interaction.commandName,
+                  subtype: 'command_cooldown',
+                  expected: true,
+                  cooldownMs: abuseProtection.remainingMs,
+                  cooldownWindowMs: abuseProtection.policy?.windowMs,
+                  cooldownMaxAttempts: abuseProtection.policy?.maxAttempts
+                }, interactionTraceContext)
+              );
+            }
+
+            let guildConfig = null;
+            if (interaction.guild) {
+              guildConfig = await getGuildConfig(client, interaction.guild.id, interactionTraceContext);
+              const accessKey = resolveSlashAccessKey(interaction);
+              if (!(await isCommandEnabled(client, interaction.guild.id, accessKey, command.category))) {
+                throw createError(
+                  `Command ${accessKey} is disabled in this guild`,
+                  ErrorTypes.CONFIGURATION,
+                  'This command has been disabled for this server.',
+                  withTraceContext({ commandName: accessKey, guildId: interaction.guild.id }, interactionTraceContext)
+                );
+              }
+
+              const channelCheck = await checkChannelRestriction(client, interaction.guild.id, interaction.channelId, interaction.commandName);
+              if (!channelCheck.allowed) {
+                throw createError(
+                  `Command ${interaction.commandName} used outside its restricted channel`,
+                  ErrorTypes.VALIDATION,
+                  `This command can only be used in <#${channelCheck.requiredChannelId}>.`,
+                  withTraceContext({ commandName: interaction.commandName, guildId: interaction.guild.id }, interactionTraceContext)
+                );
+              }
+            }
+
+            const permissionAllowed = await enforceDefaultCommandPermissions(interaction, command, {
+              source: 'interactionCreate',
+              guildConfig,
+            });
+            if (!permissionAllowed) {
+              return;
+            }
+
+            await command.execute(interaction, guildConfig, client);
+          } catch (error) {
+            await handleInteractionError(interaction, error, withTraceContext({
+              type: 'command',
+              commandName: interaction.commandName
+            }, interactionTraceContext));
+          }
         } else if (interaction.isAutocomplete()) {
-          // ... (your existing autocomplete code)
+          // ... (keep your existing autocomplete code here)
         } else if (interaction.isButton()) {
-          // ... (your existing button code)
+          // ... (keep your existing button code here)
         } else if (interaction.isStringSelectMenu()) {
           if (interaction.customId === 'role_select_dropdown') {
-            // === DROPDOWN ROLE SELECTOR ===
             await interaction.deferReply({ ephemeral: true });
 
             const selectedValues = interaction.values;
@@ -90,31 +169,48 @@ export default {
             return;
           }
 
-          // Existing select menu handler
+          // Existing select menu handler (if any)
           const [customId, ...args] = interaction.customId.split(':');
           const selectMenu = client.selectMenus.get(customId);
 
-          if (!selectMenu) {
-            if (!interaction.customId.includes(':') || isCollectorManagedComponent(customId)) {
-              return;
-            }
-            throw createError(...);
-          }
+          if (!selectMenu) return;
 
           try {
             await selectMenu.execute(interaction, client, args);
           } catch (error) {
-            await handleInteractionError(...);
+            await handleInteractionError(interaction, error, withTraceContext({
+              type: 'select_menu',
+              customId: interaction.customId
+            }, interactionTraceContext));
           }
         } else if (interaction.isModalSubmit()) {
-          // ... (your existing modal code)
+          // ... (keep your existing modal code)
         }
       } catch (error) {
-        logger.error('Unhandled error in interactionCreate:', { ... });
+        logger.error('Unhandled error in interactionCreate:', {
+          event: 'interaction.unhandled_error',
+          errorCode: 'INTERACTION_UNHANDLED_ERROR',
+          error,
+          traceId: interactionTraceContext.traceId,
+          interactionId: interaction.id,
+          guildId: interaction.guildId,
+          userId: interaction.user?.id
+        });
+
         try {
-          await handleInteractionError(interaction, error, ...);
+          await handleInteractionError(interaction, error, withTraceContext({
+            type: 'interaction',
+            commandName: interaction.commandName,
+            customId: interaction.customId,
+            source: 'interactionCreate.unhandled'
+          }, interactionTraceContext));
         } catch (replyError) {
-          logger.error('Failed to send fallback error response:', { ... });
+          logger.error('Failed to send fallback error response:', {
+            event: 'interaction.error_response_failed',
+            errorCode: 'INTERACTION_ERROR_RESPONSE_FAILED',
+            error: replyError,
+            traceId: interactionTraceContext.traceId
+          });
         }
       }
     });
