@@ -127,9 +127,15 @@ export function mapArgumentsToOptions(args, commandData) {
     }
   } else if (hasSubcommands) {
     if (args.length > 0) {
-      const resolvedSubcommand = resolveSubcommandAlias(args[0]);
-      logger.debug(
-        `Looking for subcommand: ${resolvedSubcommand}, available: ${subcommands.map((s) => s.name).join(', ')}`,
+  const resolvedSubcommand = resolveSubcommandAlias(args[0]);
+  const sub = subcommands.find((s) => s.name === resolvedSubcommand);
+  if (sub) {
+    subcommandName = resolvedSubcommand;
+    // ...
+  } else if (resolvedSubcommand === 'howtoearn') {
+    subcommandName = 'howtoearn'; // explicit fallback
+  }
+}
       );
       const sub = subcommands.find((s) => s.name === resolvedSubcommand);
       if (sub) {
