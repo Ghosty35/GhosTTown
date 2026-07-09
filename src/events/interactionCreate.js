@@ -462,7 +462,9 @@ export default {
             errorCode: 'INTERACTION_ERROR_RESPONSE_FAILED',
             error: replyError,
             traceId: interactionTraceContext.traceId
-                    } else if (interaction.isStringSelectMenu() && interaction.customId === 'role_select_dropdown') {
+                    
+          
+          } else if (interaction.isStringSelectMenu() && interaction.customId === 'role_select_dropdown') {
             
             
             // === DROPDOWN ROLE SELECTOR ===
@@ -511,48 +513,47 @@ export default {
         }
           });
 
-          // === Reaction Role Button Handler ===
-if (interaction.isButton() && interaction.customId.startsWith('role:')) {
-    const roleName = interaction.customId.split(':')[1];
-    const member = interaction.member;
+        } else if (interaction.isStringSelectMenu() && interaction.customId === 'role_select_dropdown') {
+            // === DROPDOWN ROLE SELECTOR ===
+            await interaction.deferReply({ ephemeral: true });
 
-    // Map button ID to actual role ID (customize this!)
-    const roleMap = {
-        'Gta News': '1197296528361017356',   // Replace with real role IDs
-        'Forza Gamers': '1510737840718221384',
-        'Game Updates/News': '1524096202432315603',
-        'Game Corner': '1469137327208005815',
-        'Verified': '1013631705506123816',
-        'Forza Gamers': '1510737840718221384',
-      
-    };
+            const selectedValues = interaction.values;
+            const member = interaction.member;
 
-    const roleId = roleMap[roleName];
-    if (!roleId) return;
+            const roleMap = {
+                'Gta News': '1197296528361017356',
+                'Forza Gamers': '1510737840718221384',
+                'Game Updates/News': '1524096202432315603',
+                'Game Corner': '1469137327208005815',
+                'Verified': '1013631705506123816',
+            };
 
-    const role = interaction.guild.roles.cache.get(roleId);
-    if (!role) {
-        return interaction.reply({ content: 'Role not found.', ephemeral: true });
-    }
+            const added = [];
+            const removed = [];
 
-    try {
-        if (member.roles.cache.has(roleId)) {
-            await member.roles.remove(roleId);
-            await interaction.reply({ 
-                content: `❌ Removed **${role.name}** role.`, 
-                ephemeral: true 
-            });
-        } else {
-            await member.roles.add(roleId);
-            await interaction.reply({ 
-                content: `✅ Added **${role.name}** role.`, 
-                ephemeral: true 
-            });
+            for (const [value, roleId] of Object.entries(roleMap)) {
+                if (!roleId) continue;
+                const role = interaction.guild.roles.cache.get(roleId);
+                if (!role) continue;
+
+                if (selectedValues.includes(value)) {
+                    if (!member.roles.cache.has(roleId)) {
+                        await member.roles.add(roleId).catch(() => {});
+                        added.push(role.name);
+                    }
+                } else {
+                    if (member.roles.cache.has(roleId)) {
+                        await member.roles.remove(roleId).catch(() => {});
+                        removed.push(role.name);
+                    }
+                }
+            }
+
+            let replyText = '';
+            if (added.length) replyText += `✅ **Added:** ${added.join(', ')}\n`;
+            if (removed.length) replyText += `❌ **Removed:** ${removed.join(', ')}\n`;
+            if (!replyText) replyText = 'No changes made.';
+
+            await interaction.editReply({ content: replyText });
         }
-    } catch (error) {
-        await interaction.reply({ 
-            content: 'Failed to update role. Make sure the bot has permission.', 
-            ephemeral: true 
-        });
-  }
-};
+});
