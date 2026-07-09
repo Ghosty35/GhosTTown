@@ -147,6 +147,112 @@ function answerMath(content, username) {
     }
 }
 
+// ---------------------------------------------------------------------
+// 0b) LINK CONCIERGE — builds direct search links from natural requests.
+// No API keys needed: these are plain search URLs. Links are wrapped in
+// <> so Discord doesn't spam the channel with giant embeds.
+// ---------------------------------------------------------------------
+
+function cleanQuery(raw) {
+    return raw.replace(/[?!.]+$/g, '').replace(/^["'`]|["'`]$/g, '').trim();
+}
+
+function enc(q) {
+    return encodeURIComponent(q);
+}
+
+function answerLinks(content, username) {
+    // 🗺️ Directions: "directions from A to B", "route from A to B",
+    // "how do I get from A to B"
+    let m = content.match(/(?:directions?|route|how (?:do|can) i get)\s+(?:from\s+)?(.+?)\s+to\s+(.+)/i);
+    if (m) {
+        const from = cleanQuery(m[1]);
+        const to = cleanQuery(m[2]);
+        return (
+            `🗺️ **${from} → ${to}**\n` +
+            `<https://www.google.com/maps/dir/${enc(from)}/${enc(to)}>\n` +
+            `There's your route, ${username}. GPS exists because of people like you.`
+        );
+    }
+
+    // 🎵 Music: "find me the song X", "play X", "music X"
+    m = content.match(/\b(?:song|music|track)\b\s*(?:called|named|by|for|about)?\s*[:\-]?\s*(.{2,80})/i) ||
+        content.match(/^play\s+(.{2,80})/i);
+    if (m) {
+        const q = cleanQuery(m[1]);
+        if (q) {
+            return (
+                `🎵 Looking for **${q}**? Here, ${username}:\n` +
+                `▶️ YouTube: <https://www.youtube.com/results?search_query=${enc(q)}>\n` +
+                `🟢 Spotify: <https://open.spotify.com/search/${enc(q)}>\n` +
+                `🟠 SoundCloud: <https://soundcloud.com/search?q=${enc(q)}>\n` +
+                `Your music taste is your business. Unfortunately.`
+            );
+        }
+    }
+
+    // 📰 News: "news about X", "X news", "game news", "gta 6 news"
+    m = content.match(/\b(?:news|latest|updates?)\s+(?:about|on|for)\s+(.{2,60})/i) ||
+        content.match(/^(.{2,60}?)\s+news\??$/i);
+    if (m) {
+        const q = cleanQuery(m[1]);
+        if (q) {
+            return (
+                `📰 Fresh **${q}** news, ${username}:\n` +
+                `<https://news.google.com/search?q=${enc(q)}>\n` +
+                `▶️ Video coverage: <https://www.youtube.com/results?search_query=${enc(q + ' news')}&sp=CAI%253D>\n` +
+                `Now you can be wrong about it with CONFIDENCE.`
+            );
+        }
+    }
+
+    // 🎬 Videos: "video of X", "watch X"
+    m = content.match(/\b(?:videos?)\s+(?:of|about|for)\s+(.{2,80})/i) ||
+        content.match(/^watch\s+(.{2,80})/i);
+    if (m) {
+        const q = cleanQuery(m[1]);
+        return (
+            `🎬 Videos of **${q}**:\n<https://www.youtube.com/results?search_query=${enc(q)}>\n` +
+            `Enjoy the rabbit hole, ${username}. See you in 4 hours.`
+        );
+    }
+
+    // 🖼️ Images: "images of X", "show me pictures of X"
+    m = content.match(/\b(?:images?|pictures?|pics?|photos?)\s+of\s+(.{2,80})/i);
+    if (m) {
+        const q = cleanQuery(m[1]);
+        return (
+            `🖼️ Pictures of **${q}**:\n<https://www.google.com/search?q=${enc(q)}&tbm=isch>\n` +
+            `You're welcome, ${username}. My eyes did the walking so yours don't have to.`
+        );
+    }
+
+    // 😂 GIFs: "gif of X"
+    m = content.match(/\bgifs?\s+(?:of|for)\s+(.{2,60})/i);
+    if (m) {
+        const q = cleanQuery(m[1]);
+        return (
+            `😂 GIFs of **${q}**:\n<https://tenor.com/search/${enc(q)}-gifs>\n` +
+            `Because words are hard, right ${username}?`
+        );
+    }
+
+    // 🔍 General search: "search for X", "google X", "look up X", "find me X"
+    m = content.match(/^(?:search|google|look\s*up)\s+(?:for\s+|me\s+)?(.{2,100})/i) ||
+        content.match(/^find\s+me\s+(.{2,100})/i);
+    if (m) {
+        const q = cleanQuery(m[1]);
+        return (
+            `🔍 I searched **${q}** so you didn't have to, ${username}:\n` +
+            `<https://www.google.com/search?q=${enc(q)}>\n` +
+            `🦆 Private mode: <https://duckduckgo.com/?q=${enc(q)}>\n` +
+            `Bookmark google.com sometime. It's free.`
+        );
+    }
+
+    return null;
+}
+
 function looksLikeQuestion(content) {
     return (
         /\?/.test(content) ||
@@ -214,6 +320,11 @@ async function trySmartAnswer(message) {
 
     const math = answerMath(content, username);
     if (math) return math;
+
+    // Link concierge — search / music / directions / news / videos /
+    // images / gifs. Free (no API), so it runs before the AI layer.
+    const links = answerLinks(content, username);
+    if (links) return links;
 
     // If a contextual comeback category matches, let the (free) roast
     // picker handle it instead of spending an AI call on banter like
