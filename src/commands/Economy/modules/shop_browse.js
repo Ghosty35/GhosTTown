@@ -13,12 +13,13 @@ export default {
         const perPage = 3; // fewer per page = more breathing room per item
 
         const categories = {
-            all: { label: 'All Items', icon: '🛒' },
-            tool: { label: 'Tools', icon: '🛠️' },
-            color_role: { label: 'Colors', icon: '🌈' },
-            consumable: { label: 'Consumables', icon: '🍀' },
-            access_role: { label: 'VIP', icon: '⭐' },
-            upgrade: { label: 'Upgrades', icon: '⬆️' },
+            all: { label: 'All Items', icon: '🛒', blurb: 'Everything in stock, sorted by category.' },
+            tool: { label: 'Tools & Gear', icon: '🛠️', blurb: 'Equipment that boosts your earnings and protects your cash.' },
+            upgrade: { label: 'Upgrades', icon: '⚡', blurb: 'Permanent account improvements.' },
+            role: { label: 'Premium', icon: '👑', blurb: 'Exclusive roles with lasting perks.' },
+            consumable: { label: 'Consumables', icon: '🍀', blurb: 'One-time boosts for the bold.' },
+            license: { label: 'Job Licenses', icon: '📜', blurb: 'Your ticket to a weekly paycheck — buy one, then /job apply.' },
+            access_role: { label: 'VIP', icon: '⭐', blurb: 'Members-only access, forever.' },
         };
 
         const getFilteredItems = () =>
@@ -32,14 +33,14 @@ export default {
             const category = categories[currentCategory];
 
             const embed = new EmbedBuilder()
-                .setTitle(`${category.icon}  ${category.label} — Shop`)
+                .setTitle(`🏪 GhostTown Marketplace  •  ${category.icon} ${category.label}`)
                 .setColor(getColor('primary'))
-                .setDescription(`🛍️ *Click a* **Buy** *button below to purchase instantly.*\n${DIVIDER}`);
+                .setDescription(`*${category.blurb}*\n\n🛒 *Tap a* **Buy** *button for instant purchase — or use the menu to switch departments.*\n${DIVIDER}`);
 
             items.forEach((item, idx) => {
                 embed.addFields({
-                    name: `${item.emoji || '🔹'}  ${item.name}  •  \`${item.id}\``,
-                    value: `${item.description}\n\n**💰 Price:** \`$${item.price.toLocaleString()}\``,
+                    name: `${item.emoji || '🔹'}  ${item.name}`,
+                    value: `${item.description}\n💰 **\`$${item.price.toLocaleString()}\`**  ·  🏷️ \`${item.id}\``,
                     inline: false,
                 });
 
@@ -49,7 +50,7 @@ export default {
                 }
             });
 
-            embed.setFooter({ text: `📄 Page ${page} of ${totalPages}   •   /buy <id> for manual purchase` });
+            embed.setFooter({ text: `📄 Page ${page}/${totalPages}  •  💳 Purchases charge your wallet  •  /buy <id> also works` });
             return embed;
         };
 
@@ -63,7 +64,7 @@ export default {
             return new ActionRowBuilder().addComponents(
                 new StringSelectMenuBuilder()
                     .setCustomId('shop_category')
-                    .setPlaceholder('📂 Choose a category')
+                    .setPlaceholder('🏬 Browse departments...')
                     .addOptions(opts)
             );
         };
@@ -79,9 +80,9 @@ export default {
                 buyRow.addComponents(
                     new ButtonBuilder()
                         .setCustomId(`buy_${item.id}`)
-                        .setLabel(`Buy ${item.name}`)
+                        .setLabel(`Buy ${item.name} — $${item.price.toLocaleString()}`)
                         .setStyle(ButtonStyle.Success)
-                        .setEmoji('🛒')
+                        .setEmoji(item.emoji || '🛒')
                 );
             });
 
