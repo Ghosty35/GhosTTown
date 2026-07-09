@@ -129,6 +129,9 @@ export const subcommandAliases = {
     'add': 'add',
     'remove': 'remove',
     'list': 'list',
+    'howtoearn': 'howtoearn',
+  'how-to-earn': 'howtoearn',
+  'howto': 'howtoearn',
 };
 
 /**
